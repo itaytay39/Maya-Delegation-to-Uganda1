@@ -563,8 +563,11 @@ window.addEventListener('click', (e) => {
 window.addEventListener('resize', () => { map.invalidateSize(); });
 setTimeout(() => { map.invalidateSize(); }, 500);
 
-// טעינת נתונים מ-localStorage או שימוש בברירת מחדל
 console.log("🚀 מתחיל עיבוד נתונים ראשוני...");
+
+// מחיקת נתונים ישנים מה-localStorage כדי לטעון מהקוד החדש
+localStorage.removeItem('maya-participants');
+
 if (!StorageManager.load()) {
     console.log("📦 משתמש בנתונים לדוגמה");
     StorageManager.save(); // שמירה ראשונית
@@ -573,6 +576,7 @@ if (!StorageManager.load()) {
 renderMarkers();
 updateParticipantCount();
 console.log("✅ אפליקציית מאיה מוכנה לשימוש!");
+
 
 // הוספת CSS לאנימציית slideOut
 const additionalCSS = `
