@@ -37,6 +37,7 @@ body {
     overflow-x: hidden;
 }
 
+/* כותרת */
 .header {
     background: linear-gradient(135deg, var(--md-primary), var(--md-secondary));
     padding: 2rem 1.5rem;
@@ -481,6 +482,32 @@ body {
     color: white !important;
     font-family: 'Heebo', sans-serif;
     min-height: 48px;
+}
+
+.popup-btn .material-symbols-outlined {
+    color: white !important;
+    font-size: 1.2rem;
+}
+
+.popup-btn.phone { 
+    background: linear-gradient(135deg, var(--md-primary), #4f46e5); 
+}
+.popup-btn.whatsapp { 
+    background: linear-gradient(135deg, var(--md-success), #059669); 
+}
+.popup-btn.edit { 
+    background: linear-gradient(135deg, var(--md-warning), #d97706);
+}
+.popup-btn.delete { 
+    background: linear-gradient(135deg, var(--md-error), #dc2626); 
+}
+.popup-btn.carpool { 
+    background: linear-gradient(135deg, #374151, #1f2937); 
+}
+
+.popup-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--md-shadow-lg);
 }
 
 .toast-container {

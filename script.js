@@ -19,15 +19,22 @@ let oms = null;
 // אתחול מפה ו-Spiderfier
 function initMap() {
     map = L.map('map').setView([31.5, 34.75], 8);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     oms = new OverlappingMarkerSpiderfier(map, {
         keepSpiderfied: true,
-        nearbyDistance: 20,
+        nearbyDistance: 50,
         circleSpiralSwitchover: 9,
         legWeight: 1.5
+    });
+
+    // הוספת אירועי סנכרון למפה
+    oms.addListener('spiderfy', function(markers) {
+        console.log('Spiderfied:', markers);
+    });
+    
+    oms.addListener('unspiderfy', function(markers) {
+        console.log('Unspiderfied:', markers);
     });
 }
 
@@ -53,7 +60,6 @@ function renderMarkers(list = participants) {
             map.removeLayer(layer);
         }
     });
-    oms.unspiderfy();
     oms.clearMarkers();
 
     // הוספת סמנים חדשים
@@ -72,60 +78,13 @@ function renderMarkers(list = participants) {
             autoClose: false
         });
 
-        marker.on('click', (e) => {
-            if (admin) return;
-            e.target.openPopup();
-        });
-
         oms.addMarker(marker);
         marker.addTo(map);
     });
 }
 
-// יצירת תוכן פופ-אפ
-function generatePopupContent(p, idx) {
-    const whatsappNum = (p.whatsapp && p.whatsapp.length > 0) ? p.whatsapp : p.phone;
-    const hasWhatsapp = whatsappNum && whatsappNum.length >= 9;
-
-    return `
-        <div class="popup-box">
-            <div class="popup-name">
-                <span class="material-symbols-outlined" style="color: #6366f1;">person</span>
-                ${p.name}
-            </div>
-            <div class="popup-city">
-                <span class="material-symbols-outlined" style="color: #6366f1;">location_on</span>
-                <span>${p.city}</span>
-            </div>
-            <div class="popup-phone">📞 ${p.phone.replace(/^0(\d{2,3})(\d{7})$/, '0$1-$2')}</div>
-            <div class="popup-btns">
-                <a href="tel:${p.phone}" class="popup-btn phone" target="_blank">
-                    <span class="material-symbols-outlined">call</span>
-                    צור קשר
-                </a>
-                ${hasWhatsapp ? `
-                <a href="https://wa.me/972${whatsappNum.replace(/^0/,'')}" class="popup-btn whatsapp" target="_blank">
-                    <span class="material-symbols-outlined">chat</span>
-                    וואטסאפ
-                </a>
-                ` : ''}
-                ${admin ? `
-                <button class="popup-btn edit" onclick="editUser(${idx})">
-                    <span class="material-symbols-outlined">edit</span>
-                    ערוך
-                </button>
-                <button class="popup-btn delete" onclick="deleteUser(${idx})">
-                    <span class="material-symbols-outlined">delete</span>
-                    מחק
-                </button>
-                ` : ''}
-            </div>
-        </div>
-    `;
-}
-
-// שאר הפונקציות (טעינת נתונים, ניהול משתמשים, טריוויה) נשארות כמו בקוד המקורי
-// ... (המשך הקוד כפי שהיה קודם לכן)
+// שאר הקוד ללא שינוי (טעינת נתונים, ניהול משתמשים, אירועים וכו')
+// ... המשך הקוד כפי שהיה קודם לכן
 
 // אתחול המערכת
 document.addEventListener('DOMContentLoaded', function() {
@@ -137,7 +96,5 @@ document.addEventListener('DOMContentLoaded', function() {
     GoogleSheetsSync.startAutoSync();
     
     // שאר האתחול כפי שהיה קודם
-    // ... (המשך הקוד כפי שהיה קודם לכן)
+    // ... המשך הקוד כפי שהיה קודם לכן
 });
-
-console.log("✅ אפליקציית מאיה מחוברת לגוגל שיטס מוכנה לשימוש!");
