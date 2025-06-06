@@ -8,19 +8,36 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="./style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/OverlappingMarkerSpiderfier-Leaflet/0.2.6/oms.min.js"></script>
     <style>
-        .oms-spider-leg { stroke: #6366f1; stroke-width: 2px; }
-        .oms-spider-node { fill: #6366f1; }
+        .logo-maya {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            background: white;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-maya img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div id="app-container">
         <header class="header">
+            <!-- כפתור אדמין בפינה השמאלית העליונה -->
             <button id="admin-login-btn" class="admin-fab" title="כניסת אדמין">
                 <span class="material-symbols-outlined">admin_panel_settings</span>
             </button>
             
+            <!-- כפתור יציאה לאדמין -->
             <button id="admin-logout-btn" class="admin-fab logout-btn" title="התנתק" style="display: none;">
                 <span class="material-symbols-outlined">logout</span>
             </button>
@@ -34,9 +51,7 @@
             <div class="subtitle">מחברים בין חברים</div>
         </header>
 
-        <button id="trivia-btn">טריוויה מאוגנדה</button>
-        <div id="trivia-box"></div>
-
+        <!-- חיפוש -->
         <div class="search-container">
             <div class="search-box">
                 <span class="material-symbols-outlined search-icon">search</span>
@@ -44,6 +59,7 @@
             </div>
         </div>
 
+        <!-- כפתורי ניהול אדמין -->
         <div id="admin-controls" class="admin-controls" style="display: none;">
             <button id="import-btn" class="admin-control-btn">
                 <span class="material-symbols-outlined">upload_file</span>
@@ -53,30 +69,24 @@
                 <span class="material-symbols-outlined">download</span>
                 יצוא ל-Excel
             </button>
-            <button id="sync-btn" class="admin-control-btn">
-                <span class="material-symbols-outlined">sync</span>
-                סנכרון מהגיליון
-            </button>
         </div>
 
+        <!-- מפה -->
         <div class="map-container">
             <div id="map"></div>
             <div class="participant-count">
-                <span id="participant-count">טוען נתונים מגוגל שיטס...</span>
+                <span id="participant-count">טוען...</span>
             </div>
             <button id="add-user-btn" class="fab add-fab" style="display: none;" title="הוסף משתמש">
                 <span class="material-symbols-outlined">add</span>
             </button>
         </div>
-
-        <div id="sync-status" class="sync-status">
-            <span class="material-symbols-outlined sync-icon">cloud_sync</span>
-            <span id="sync-text">מתחבר לגוגל שיטס...</span>
-        </div>
     </div>
 
+    <!-- קלט חבוי ליבוא קבצים -->
     <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display: none;">
 
+    <!-- Modal כניסת אדמין -->
     <div id="admin-login-modal" class="modal" hidden>
         <div class="modal-content">
             <h3>🔐 כניסת מנהל</h3>
@@ -96,14 +106,12 @@
         </div>
     </div>
 
+    <!-- Modal הוספת/עריכת משתמש -->
     <div id="user-form-modal" class="modal" hidden>
         <div class="modal-content">
             <h3 id="user-form-title">➕ הוסף משתתף</h3>
             <div class="form-group">
-                <input type="text" class="form-input" placeholder="שם פרטי" id="user-first-name">
-            </div>
-            <div class="form-group">
-                <input type="text" class="form-input" placeholder="שם משפחה" id="user-last-name">
+                <input type="text" class="form-input" placeholder="שם מלא" id="user-name">
             </div>
             <div class="form-group">
                 <input type="text" class="form-input" placeholder="עיר" id="user-city">
@@ -127,6 +135,7 @@
         </div>
     </div>
 
+    <!-- הודעות מערכת -->
     <div id="toast-container" class="toast-container"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

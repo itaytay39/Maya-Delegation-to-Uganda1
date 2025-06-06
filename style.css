@@ -63,20 +63,15 @@ body {
     transition: transform 0.3s ease;
     background: white;
     padding: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .logo-maya:hover {
     transform: scale(1.05);
 }
 
-.logo-maya img {
+.logo-maya svg {
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    border-radius: 50%;
 }
 
 .admin-fab {
@@ -103,10 +98,12 @@ body {
     transform: scale(1.1);
 }
 
+/* כפתור כניסה משמאל */
 #admin-login-btn {
     left: 15px;
 }
 
+/* כפתור יציאה מימין */
 .logout-btn {
     right: 15px;
     background: rgba(255,0,0,0.3) !important;
@@ -128,41 +125,7 @@ body {
     font-weight: 300;
 }
 
-#trivia-btn {
-    background-color: #6c63ff;
-    color: white;
-    font-weight: 700;
-    font-size: 1.1rem;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(108, 99, 255, 0.4);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    margin: 10px auto 20px;
-    display: block;
-    max-width: 200px;
-    text-align: center;
-    direction: rtl;
-}
-
-#trivia-btn:hover {
-    background-color: #574bdb;
-    box-shadow: 0 6px 12px rgba(87, 75, 219, 0.6);
-}
-
-#trivia-box {
-    max-width: 600px;
-    margin: 0 auto 30px;
-    padding: 15px;
-    background-color: #f5f5ff;
-    border-radius: 10px;
-    font-size: 1.2rem;
-    direction: rtl;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
+/* חיפוש */
 .search-container {
     padding: 1rem;
     background: var(--md-surface);
@@ -199,6 +162,7 @@ body {
     background: transparent;
 }
 
+/* כפתורי ניהול אדמין */
 .admin-controls {
     padding: 0 1rem;
     display: flex;
@@ -228,6 +192,7 @@ body {
     transform: translateY(-1px);
 }
 
+/* מפה */
 .map-container {
     height: 60vh;
     margin: 1rem;
@@ -256,31 +221,7 @@ body {
     box-shadow: var(--md-shadow);
 }
 
-.sync-status {
-    position: fixed;
-    bottom: 1rem;
-    right: 1rem;
-    background: var(--md-surface);
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
-    box-shadow: var(--md-shadow);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    z-index: 1000;
-}
-
-.sync-icon {
-    color: var(--md-success);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
+/* כפתורים צפים */
 .fab {
     position: absolute;
     width: 60px;
@@ -309,6 +250,7 @@ body {
     box-shadow: 0 12px 35px rgba(99, 102, 241, 0.4);
 }
 
+/* מודלים */
 .modal {
     position: fixed;
     top: 0;
@@ -352,6 +294,15 @@ body {
     }
 }
 
+.modal h3 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--md-text);
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+/* טפסים */
 .form-group {
     margin-bottom: 1rem;
 }
@@ -373,6 +324,7 @@ body {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
+/* כפתורים */
 .button-group {
     display: flex;
     gap: 0.75rem;
@@ -414,6 +366,7 @@ body {
     background: #cbd5e1;
 }
 
+/* עיצוב בועית Popup */
 .leaflet-popup-content {
     margin: 12px !important;
     min-width: 300px;
@@ -510,6 +463,7 @@ body {
     box-shadow: var(--md-shadow-lg);
 }
 
+/* הודעות מערכת */
 .toast-container {
     position: fixed;
     top: 1rem;
@@ -543,11 +497,7 @@ body {
     to { transform: translateX(0); opacity: 1; }
 }
 
-@keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-}
-
+/* רספונסיביות */
 @media (max-width: 480px) {
     #app-container {
         max-width: 100vw;
@@ -589,27 +539,4 @@ body {
     .admin-controls {
         flex-direction: column;
     }
-}
-
-/* Spiderfier styles */
-.oms-spider-leg { 
-    stroke: #6366f1; 
-    stroke-width: 2px;
-    stroke-dasharray: 5,5;
-    animation: spiderLeg 1s infinite linear;
-}
-
-.oms-spider-node { 
-    fill: #6366f1;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.oms-spider-node:hover {
-    transform: scale(1.2);
-}
-
-@keyframes spiderLeg {
-    from { stroke-dashoffset: 10; }
-    to { stroke-dashoffset: 0; }
 }
