@@ -10,6 +10,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
+    <!-- MarkerCluster CSS for grouping markers -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+
     <style>
         :root {
             --md-primary: #6366f1;
@@ -198,7 +202,7 @@
             <button id="admin-logout-btn" class="admin-fab"><span class="material-symbols-outlined">logout</span></button>
             <div class="logo-container">
                 <div class="logo-maya">
-                    <img src="https://itaytay39.github.io/maya-second-app/logo.jfif" alt="לוגו מאיה" onerror="this.style.display='none'">
+                    <img src="https://itaytay39.github.io/Maya-Delegation-to-Uganda1/logo.jpg" alt="לוגו מאיה" onerror="this.style.display='none'">
                 </div>
             </div>
             <h1 class="title">מפת המשתתפים של מאיה</h1>
@@ -262,6 +266,8 @@
     <div id="toast-container"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // --- System Settings ---
@@ -275,7 +281,7 @@
         let participants = [];
         let syncTimer = null;
         let isAdmin = false;
-        let editIdx = null; // To track which user is being edited
+        let editIdx = null;
 
         // --- DOM Elements ---
         const elements = {
@@ -309,7 +315,7 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
-        const markersLayer = L.layerGroup().addTo(map);
+        const markersLayer = L.markerClusterGroup().addTo(map);
 
         // --- Modules & Managers ---
         const ToastManager = {
@@ -327,10 +333,10 @@
         };
 
         const GoogleSheetsSync = {
-            async loadData() {
+            async loadData(isManual = false) {
                 try {
-                    elements.syncText.textContent = "טוען נתונים...";
-                    const response = await fetch(SHEET_CONFIG.participantsUrl);
+                    elements.syncText.textContent = "מסנכרן...";
+                    const response = await fetch(`${SHEET_CONFIG.participantsUrl}&t=${new Date().getTime()}`);
                     if (!response.ok) throw new Error(`Network response was not ok`);
                     const csvText = await response.text();
                     const rows = this.parseCSV(csvText);
@@ -353,15 +359,21 @@
                     }).filter(p => p.name && !isNaN(p.lat) && !isNaN(p.lon));
                     
                     elements.syncText.textContent = `סונכרן: ${new Date().toLocaleTimeString()}`;
-                    ToastManager.show(`נטענו ${participants.length} משתתפים`);
+                    
+                    // *** FIXED *** Only show toast on manual sync
+                    if (isManual) {
+                        ToastManager.show(`סונכרנו ${participants.length} משתתפים`);
+                    }
+                    
                     this.updateUI();
                 } catch (error) {
                     console.error("Data load error:", error);
                     elements.syncText.textContent = "שגיאת סנכרון";
-                    ToastManager.show('שגיאה בטעינת נתונים', 'error');
+                    if (isManual) {
+                       ToastManager.show('שגיאה בטעינת נתונים', 'error');
+                    }
                 }
             },
-            // *** FIXED *** Robust CSV parser
             parseCSV(csvText) {
                 const lines = csvText.split(/\r\n|\n/);
                 return lines.map(line => {
@@ -371,20 +383,19 @@
                     for (let i = 0; i < line.length; i++) {
                         const char = line[i];
                         const nextChar = line[i+1];
-
                         if (char === '"' && inQuotes && nextChar === '"') {
                             current += '"';
                             i++;
                         } else if (char === '"') {
                             inQuotes = !inQuotes;
                         } else if (char === ',' && !inQuotes) {
-                            result.push(current.trim());
+                            result.push(current.trim().replace(/^"|"$/g, ''));
                             current = '';
                         } else {
                             current += char;
                         }
                     }
-                    result.push(current.trim());
+                    result.push(current.trim().replace(/^"|"$/g, ''));
                     return result;
                 });
             },
@@ -400,7 +411,7 @@
             },
             startAutoSync() {
                 this.stopAutoSync();
-                syncTimer = setInterval(() => this.loadData(), SHEET_CONFIG.syncInterval);
+                syncTimer = setInterval(() => this.loadData(false), SHEET_CONFIG.syncInterval);
             },
             stopAutoSync() {
                 if (syncTimer) clearInterval(syncTimer);
@@ -413,11 +424,12 @@
             elements.adminLoginBtn.style.display = isAdmin ? 'none' : 'flex';
             elements.adminLogoutBtn.style.display = isAdmin ? 'flex' : 'none';
             elements.adminControls.style.display = isAdmin ? 'flex' : 'none';
-            applyFilters(); // Re-render markers to show/hide admin buttons
+            applyFilters();
         }
 
         function renderMarkers(list) {
             markersLayer.clearLayers();
+            const markersToAdd = [];
             list.forEach(p => {
                 const originalIndex = participants.findIndex(orig => orig === p);
                 const marker = L.marker([p.lat, p.lon], { icon: L.divIcon({ className: 'modern-marker', html: `<div style="width: 24px; height: 24px; background: var(--md-primary); border-radius: 50%; border: 3px solid white; box-shadow: var(--md-shadow);"></div>`, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -15] }) });
@@ -426,7 +438,6 @@
                     <button class="popup-btn edit" data-index="${originalIndex}"><span class="material-symbols-outlined">edit</span>ערוך</button>
                     <button class="popup-btn delete" data-index="${originalIndex}"><span class="material-symbols-outlined">delete</span>מחק</button>
                 ` : '';
-
                 marker.bindPopup(`
                     <div class="popup-box">
                         <div class="popup-name"><span class="material-symbols-outlined">person</span>${p.name}</div>
@@ -438,8 +449,9 @@
                             ${adminButtons}
                         </div>
                     </div>`);
-                markersLayer.addLayer(marker);
+                markersToAdd.push(marker);
             });
+            markersLayer.addLayers(markersToAdd);
             elements.participantCount.textContent = `${list.length} משתתפים`;
         }
         
@@ -495,23 +507,19 @@
         }
 
         function handleUserFormSave() {
-            // In a real app, you would send this data to the server/Google Sheet
-            // For this demo, we just manipulate the local array
             const newUser = {
-                firstName: elements.userFirstName.value,
-                lastName: elements.userLastName.value,
-                name: `${elements.userFirstName.value} ${elements.userLastName.value}`.trim(),
-                city: elements.userCity.value,
-                phone: elements.userPhone.value,
-                whatsapp: elements.userWhatsapp.value,
-                // A real app would need to geocode the address to get lat/lon
+                firstName: elements.userFirstName.value.trim(),
+                lastName: elements.userLastName.value.trim(),
+                name: `${elements.userFirstName.value.trim()} ${elements.userLastName.value.trim()}`.trim(),
+                city: elements.userCity.value.trim(),
+                phone: elements.userPhone.value.trim(),
+                whatsapp: elements.userWhatsapp.value.trim(),
                 lat: editIdx !== null ? participants[editIdx].lat : 32.0853,
                 lon: editIdx !== null ? participants[editIdx].lon : 34.7818,
             };
             if (!newUser.name || !newUser.city || !newUser.phone) {
                 return ToastManager.show('יש למלא שם, עיר וטלפון', 'error');
             }
-
             if (editIdx !== null) {
                 participants[editIdx] = newUser;
                 ToastManager.show('משתמש עודכן בהצלחה');
@@ -528,7 +536,7 @@
         elements.cityFilter.addEventListener('change', applyFilters);
         elements.adminLoginBtn.addEventListener('click', () => elements.adminLoginModal.hidden = false);
         elements.adminLogoutBtn.addEventListener('click', () => { setAdminMode(false); ToastManager.show('התנתקת מהניהול'); });
-        elements.syncBtn.addEventListener('click', () => GoogleSheetsSync.loadData());
+        elements.syncBtn.addEventListener('click', () => GoogleSheetsSync.loadData(true)); // Manual sync
         
         elements.adminLoginSubmit.addEventListener('click', handleAdminLogin);
         elements.adminCancel.addEventListener('click', () => elements.adminLoginModal.hidden = true);
@@ -542,7 +550,6 @@
             if (!target) return;
             const index = parseInt(target.dataset.index, 10);
             if (isNaN(index)) return;
-            
             if (target.classList.contains('edit')) {
                 map.closePopup();
                 openUserForm(index);
@@ -557,10 +564,10 @@
         });
 
         // --- Initial Load ---
-        GoogleSheetsSync.loadData();
+        GoogleSheetsSync.loadData(true); // Initial load is considered "manual" to show the first toast
         GoogleSheetsSync.startAutoSync();
         window.addEventListener('resize', () => map.invalidateSize());
-        setTimeout(() => map.invalidateSize(), 400); // Final check after everything renders
+        setTimeout(() => map.invalidateSize(), 400);
     });
     </script>
 </body>
