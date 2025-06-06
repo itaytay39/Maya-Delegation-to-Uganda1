@@ -540,3 +540,21 @@ body {
         flex-direction: column;
     }
 }
+/* ספירת ערים - עיצוב תואם למערכת */
+.city-counter {
+    background: var(--md-surface);
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: var(--md-radius);
+    box-shadow: var(--md-shadow);
+}
+
+.city-counter-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    background: var(--md-background);
+    border-radius: 8px;
+}
+

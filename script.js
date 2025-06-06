@@ -597,3 +597,19 @@ console.log(`
 💾 אחסון: localStorage
 🔐 הגנת אדמין: מתקדמת
 `);
+// עדכון פונקציית הסינון
+function filterCarpool() {
+    const currentUser = participants.find(p => p.phone === currentPhone);
+    if (!currentUser) return;
+
+    const filtered = participants.filter(p => 
+        p.phone !== currentUser.phone && 
+        distance(currentUser.lat, currentUser.lon, p.lat, p.lon) <= 15
+    );
+
+    renderMarkers(filtered);
+}
+
+// הוספת אירוע לכפתור הקיים
+document.getElementById('carpool-btn').addEventListener('click', filterCarpool);
+
