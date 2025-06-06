@@ -2,21 +2,71 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מפת משתתפים - מאיה משלחת לאוגנדה 2025</title>
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="./style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>מפת המשתתפים של מאיה</title>
+
+    <!-- External Libraries -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
     <style>
-        .logo-maya {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
+        :root {
+            --md-primary: #6366f1;
+            --md-secondary: #8b5cf6;
+            --md-success: #10b981;
+            --md-error: #ef4444;
+            --md-warning: #f59e0b;
+            --md-surface: #ffffff;
+            --md-background: #f8fafc;
+            --md-text: #1e293b;
+            --md-border: #e2e8f0;
+            --md-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --md-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --md-radius: 24px;
+            --md-transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: 'Heebo', sans-serif;
+            background: var(--md-background);
+            direction: rtl;
+            color: var(--md-text);
+        }
+        #app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--md-surface);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--md-primary), var(--md-secondary));
+            padding: 1.5rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .logo-maya {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
             background: white;
             padding: 5px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -25,123 +75,493 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            display: block;
+            border-radius: 50%;
         }
+        .admin-fab {
+            position: absolute;
+            top: 15px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        #admin-login-btn { left: 15px; }
+        #admin-logout-btn { right: 15px; display: none; background: rgba(239, 68, 68, 0.3); }
+
+        /* Filters & Admin Controls */
+        .controls-area {
+            flex-shrink: 0;
+            background: var(--md-surface);
+            box-shadow: var(--md-shadow);
+            z-index: 5;
+        }
+        .filters-container { padding: 1rem; }
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .search-box, .city-filter-box {
+            position: relative; display: flex; align-items: center;
+            background: var(--md-background); border-radius: 12px;
+            padding: 0.5rem 1rem; border: 2px solid var(--md-border);
+        }
+        .filter-icon { color: #64748b; margin-left: 0.5rem; }
+        .search-input, #city-filter {
+            flex: 1; width: 100%; border: none; outline: none;
+            font-size: 1rem; background: transparent; appearance: none;
+        }
+        #city-filter { cursor: pointer; }
+        .admin-controls {
+            display: none; padding: 0 1rem 1rem; gap: 1rem; flex-wrap: wrap;
+        }
+        .admin-control-btn {
+            flex: 1; min-width: 150px; padding: 0.75rem; border: none; border-radius: 12px;
+            background: var(--md-primary); color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+
+        /* Map */
+        .map-container {
+            flex-grow: 1;
+            position: relative;
+        }
+        #map { height: 100%; width: 100%; background: #eee; }
+        .participant-count {
+            position: absolute; top: 1rem; right: 1rem;
+            background: rgba(255,255,255,0.9); padding: 0.5rem 1rem;
+            border-radius: 20px; z-index: 401;
+        }
+
+        /* Popups */
+        .leaflet-popup-content-wrapper { border-radius: 16px; }
+        .leaflet-popup-content { margin: 0 !important; min-width: 280px; }
+        .popup-box { padding: 1.5rem 1rem; text-align: center; }
+        .popup-name { font-size: 1.4rem; font-weight: 700; color: var(--md-primary); margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .popup-city { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .popup-phone { font-size: 1rem; color: #64748b; margin-bottom: 1rem; direction: ltr; }
+        .popup-btns { display: flex; flex-direction: column; gap: 0.75rem; }
+        .popup-btn {
+            padding: 0.75rem; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600;
+            cursor: pointer; text-decoration: none; color: white !important;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .popup-btn.phone { background: linear-gradient(135deg, var(--md-primary), #4f46e5); }
+        .popup-btn.whatsapp { background: linear-gradient(135deg, var(--md-success), #059669); }
+        .popup-btn.edit { background: linear-gradient(135deg, var(--md-warning), #d97706); }
+        .popup-btn.delete { background: linear-gradient(135deg, var(--md-error), #dc2626); }
+
+        /* Modals */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
+        }
+        .modal[hidden] { display: none !important; }
+        .modal-content {
+            background: var(--md-surface); border-radius: var(--md-radius);
+            padding: 2rem; width: 100%; max-width: 400px;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-input {
+            width: 100%; padding: 0.75rem 1rem; border: 2px solid var(--md-border);
+            border-radius: 12px; font-size: 1rem;
+        }
+        .button-group { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn { flex: 1; padding: 0.75rem 1rem; border: none; border-radius: 12px; font-size: 1rem; cursor: pointer; }
+        .btn-primary { background: var(--md-primary); color: white; }
+        .btn-secondary { background: var(--md-border); }
+
+        /* Sync & Toast */
+        #sync-status, #toast-container { position: fixed; right: 1rem; z-index: 1001; }
+        #sync-status { bottom: 1rem; background: var(--md-surface); padding: 0.5rem 1rem; border-radius: 12px; box-shadow: var(--md-shadow); display: flex; align-items: center; gap: 0.5rem;}
+        #toast-container { top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast {
+            background: var(--md-surface); padding: 1rem 1.5rem; border-radius: 12px;
+            box-shadow: var(--md-shadow-lg); border-left: 4px solid var(--md-success);
+            animation: slideIn 0.3s ease; min-width: 250px;
+        }
+        .toast.error { border-left-color: var(--md-error); }
+        @keyframes slideIn { from { transform: translateX(120%); } to { transform: translateX(0); } }
+        @keyframes slideOut { to { transform: translateX(120%); } }
+
     </style>
 </head>
 <body>
     <div id="app-container">
+        <!-- Header -->
         <header class="header">
-            <!-- כפתור אדמין בפינה השמאלית העליונה -->
-            <button id="admin-login-btn" class="admin-fab" title="כניסת אדמין">
-                <span class="material-symbols-outlined">admin_panel_settings</span>
-            </button>
-            
-            <!-- כפתור יציאה לאדמין -->
-            <button id="admin-logout-btn" class="admin-fab logout-btn" title="התנתק" style="display: none;">
-                <span class="material-symbols-outlined">logout</span>
-            </button>
-            
+            <button id="admin-login-btn" class="admin-fab"><span class="material-symbols-outlined">admin_panel_settings</span></button>
+            <button id="admin-logout-btn" class="admin-fab"><span class="material-symbols-outlined">logout</span></button>
             <div class="logo-container">
                 <div class="logo-maya">
-                    <img src="logo.jpg" alt="מאיה משלחת לאוגנדה">
+                    <img src="https://itaytay39.github.io/maya-second-app/logo.jfif" alt="לוגו מאיה" onerror="this.style.display='none'">
                 </div>
             </div>
-            <div class="title">מאיה - משלחת לאוגנדה</div>
-            <div class="subtitle">מחברים בין חברים</div>
+            <h1 class="title">מפת המשתתפים של מאיה</h1>
         </header>
 
-        <!-- חיפוש -->
-        <div class="search-container">
-            <div class="search-box">
-                <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" class="search-input" placeholder="חיפוש משתתפים" id="search-input">
+        <!-- Filters & Admin -->
+        <div class="controls-area">
+            <div class="filters-container">
+                <div class="filter-grid">
+                    <div class="city-filter-box">
+                        <span class="material-symbols-outlined filter-icon">location_city</span>
+                        <select id="city-filter"><option value="">כל הערים</option></select>
+                    </div>
+                    <div class="search-box">
+                        <span class="material-symbols-outlined filter-icon">search</span>
+                        <input type="search" id="search-input" placeholder="חיפוש שם או טלפון..." class="search-input">
+                    </div>
+                </div>
+            </div>
+            <div id="admin-controls" class="admin-controls">
+                <button id="add-user-btn" class="admin-control-btn"><span class="material-symbols-outlined">add</span>הוסף משתתף</button>
+                <button id="sync-btn" class="admin-control-btn"><span class="material-symbols-outlined">sync</span>סנכרן עכשיו</button>
             </div>
         </div>
 
-        <!-- כפתורי ניהול אדמין -->
-        <div id="admin-controls" class="admin-controls" style="display: none;">
-            <button id="import-btn" class="admin-control-btn">
-                <span class="material-symbols-outlined">upload_file</span>
-                יבוא מ-Excel
-            </button>
-            <button id="export-btn" class="admin-control-btn">
-                <span class="material-symbols-outlined">download</span>
-                יצוא ל-Excel
-            </button>
-        </div>
-
-        <!-- מפה -->
-        <div class="map-container">
+        <!-- Map -->
+        <main class="map-container">
             <div id="map"></div>
-            <div class="participant-count">
-                <span id="participant-count">טוען...</span>
-            </div>
-<div id="city-counter" class="city-counter"></div>
-            <button id="add-user-btn" class="fab add-fab" style="display: none;" title="הוסף משתמש">
-                <span class="material-symbols-outlined">add</span>
-            </button>
-        </div>
+            <div id="participant-count" class="participant-count">טוען...</div>
+        </main>
     </div>
 
-    <!-- קלט חבוי ליבוא קבצים -->
-    <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display: none;">
-
-    <!-- Modal כניסת אדמין -->
+    <!-- Modals -->
     <div id="admin-login-modal" class="modal" hidden>
         <div class="modal-content">
-            <h3>🔐 כניסת מנהל</h3>
-            <div class="form-group">
-                <input type="password" class="form-input" placeholder="סיסמה" id="admin-password">
-            </div>
+            <h3>כניסת מנהל</h3>
+            <div class="form-group"><input type="password" id="admin-password" class="form-input" placeholder="הכנס סיסמה"></div>
             <div class="button-group">
-                <button class="btn btn-primary" id="admin-login">
-                    <span class="material-symbols-outlined">login</span>
-                    כניסה
-                </button>
-                <button class="btn btn-secondary" id="admin-cancel">
-                    <span class="material-symbols-outlined">close</span>
-                    ביטול
-                </button>
+                <button id="admin-cancel" class="btn btn-secondary">ביטול</button>
+                <button id="admin-login" class="btn btn-primary">כניסה</button>
             </div>
         </div>
     </div>
-
-    <!-- Modal הוספת/עריכת משתמש -->
     <div id="user-form-modal" class="modal" hidden>
         <div class="modal-content">
-            <h3 id="user-form-title">➕ הוסף משתתף</h3>
-            <div class="form-group">
-                <input type="text" class="form-input" placeholder="שם מלא" id="user-name">
-            </div>
-            <div class="form-group">
-                <input type="text" class="form-input" placeholder="עיר" id="user-city">
-            </div>
-            <div class="form-group">
-                <input type="tel" class="form-input" placeholder="טלפון" id="user-phone">
-            </div>
-            <div class="form-group">
-                <input type="tel" class="form-input" placeholder="וואטסאפ (לא חובה)" id="user-whatsapp">
-            </div>
+            <h3 id="user-form-title">הוספת משתתף</h3>
+            <div class="form-group"><input id="user-first-name" class="form-input" placeholder="שם פרטי"></div>
+            <div class="form-group"><input id="user-last-name" class="form-input" placeholder="שם משפחה"></div>
+            <div class="form-group"><input id="user-city" class="form-input" placeholder="עיר"></div>
+            <div class="form-group"><input id="user-phone" class="form-input" placeholder="טלפון"></div>
+            <div class="form-group"><input id="user-whatsapp" class="form-input" placeholder="WhatsApp (אופציונלי)"></div>
             <div class="button-group">
-                <button class="btn btn-primary" id="user-save">
-                    <span class="material-symbols-outlined">save</span>
-                    שמירה
-                </button>
-                <button class="btn btn-secondary" id="user-cancel">
-                    <span class="material-symbols-outlined">close</span>
-                    ביטול
-                </button>
+                <button id="user-cancel" class="btn btn-secondary">ביטול</button>
+                <button id="user-save" class="btn btn-primary">שמירה</button>
             </div>
         </div>
     </div>
 
-    <!-- הודעות מערכת -->
-    <div id="toast-container" class="toast-container"></div>
+    <!-- Status & Notifications -->
+    <div id="sync-status"><span id="sync-text">מתחבר...</span></div>
+    <div id="toast-container"></div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="./script.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- System Settings ---
+        const SHEET_CONFIG = {
+            participantsUrl: 'https://docs.google.com/spreadsheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv',
+            syncInterval: 60000
+        };
+        const ADMIN_PASSWORD = "1234";
 
+        // --- Global State ---
+        let participants = [];
+        let syncTimer = null;
+        let isAdmin = false;
+        let editIdx = null; // To track which user is being edited
 
+        // --- DOM Elements ---
+        const elements = {
+            mapContainer: document.getElementById('map'),
+            searchInput: document.getElementById('search-input'),
+            cityFilter: document.getElementById('city-filter'),
+            syncText: document.getElementById('sync-text'),
+            participantCount: document.getElementById('participant-count'),
+            adminLoginBtn: document.getElementById('admin-login-btn'),
+            adminLogoutBtn: document.getElementById('admin-logout-btn'),
+            adminControls: document.getElementById('admin-controls'),
+            addUserBtn: document.getElementById('add-user-btn'),
+            syncBtn: document.getElementById('sync-btn'),
+            adminLoginModal: document.getElementById('admin-login-modal'),
+            userFormModal: document.getElementById('user-form-modal'),
+            adminPasswordInput: document.getElementById('admin-password'),
+            adminLoginSubmit: document.getElementById('admin-login'),
+            adminCancel: document.getElementById('admin-cancel'),
+            userFormTitle: document.getElementById('user-form-title'),
+            userFirstName: document.getElementById('user-first-name'),
+            userLastName: document.getElementById('user-last-name'),
+            userCity: document.getElementById('user-city'),
+            userPhone: document.getElementById('user-phone'),
+            userWhatsapp: document.getElementById('user-whatsapp'),
+            userSaveBtn: document.getElementById('user-save'),
+            userCancelBtn: document.getElementById('user-cancel'),
+        };
+
+        // --- Map Initialization ---
+        const map = L.map(elements.mapContainer).setView([31.5, 34.75], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+        const markersLayer = L.layerGroup().addTo(map);
+
+        // --- Modules & Managers ---
+        const ToastManager = {
+            show(message, type = 'success') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.animation = 'slideOut 0.3s ease forwards';
+                    setTimeout(() => { if (container.contains(toast)) container.removeChild(toast); }, 300);
+                }, 3000);
+            }
+        };
+
+        const GoogleSheetsSync = {
+            async loadData() {
+                try {
+                    elements.syncText.textContent = "טוען נתונים...";
+                    const response = await fetch(SHEET_CONFIG.participantsUrl);
+                    if (!response.ok) throw new Error(`Network response was not ok`);
+                    const csvText = await response.text();
+                    const rows = this.parseCSV(csvText);
+                    if (rows.length < 2) throw new Error('No data in sheet');
+
+                    const headers = rows[0];
+                    participants = rows.slice(1).map(row => {
+                        const obj = {};
+                        headers.forEach((h, i) => obj[h] = row[i] || '');
+                        return {
+                            name: `${obj['שם פרטי'] || ''} ${obj['שם משפחה'] || ''}`.trim(),
+                            firstName: obj['שם פרטי'] || '',
+                            lastName: obj['שם משפחה'] || '',
+                            city: obj['עיר'] || 'לא צוין',
+                            lat: parseFloat(obj['Lat']),
+                            lon: parseFloat(obj['Lon']),
+                            phone: this.formatPhone(obj['מספר טלפון']),
+                            whatsapp: this.formatPhone(obj['מספר ווצאפ'] || obj['מספר WhatsApp'])
+                        };
+                    }).filter(p => p.name && !isNaN(p.lat) && !isNaN(p.lon));
+                    
+                    elements.syncText.textContent = `סונכרן: ${new Date().toLocaleTimeString()}`;
+                    ToastManager.show(`נטענו ${participants.length} משתתפים`);
+                    this.updateUI();
+                } catch (error) {
+                    console.error("Data load error:", error);
+                    elements.syncText.textContent = "שגיאת סנכרון";
+                    ToastManager.show('שגיאה בטעינת נתונים', 'error');
+                }
+            },
+            // *** FIXED *** Robust CSV parser
+            parseCSV(csvText) {
+                const lines = csvText.split(/\r\n|\n/);
+                return lines.map(line => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        const nextChar = line[i+1];
+
+                        if (char === '"' && inQuotes && nextChar === '"') {
+                            current += '"';
+                            i++;
+                        } else if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current.trim());
+                    return result;
+                });
+            },
+            formatPhone(phone) {
+                if (!phone) return '';
+                const cleaned = phone.replace(/\D/g, '');
+                return '0' + cleaned.slice(-9);
+            },
+            updateUI() {
+                populateCityFilter();
+                applyFilters();
+                map.invalidateSize();
+            },
+            startAutoSync() {
+                this.stopAutoSync();
+                syncTimer = setInterval(() => this.loadData(), SHEET_CONFIG.syncInterval);
+            },
+            stopAutoSync() {
+                if (syncTimer) clearInterval(syncTimer);
+            }
+        };
+
+        // --- UI & Rendering Functions ---
+        function setAdminMode(isAdminMode) {
+            isAdmin = isAdminMode;
+            elements.adminLoginBtn.style.display = isAdmin ? 'none' : 'flex';
+            elements.adminLogoutBtn.style.display = isAdmin ? 'flex' : 'none';
+            elements.adminControls.style.display = isAdmin ? 'flex' : 'none';
+            applyFilters(); // Re-render markers to show/hide admin buttons
+        }
+
+        function renderMarkers(list) {
+            markersLayer.clearLayers();
+            list.forEach(p => {
+                const originalIndex = participants.findIndex(orig => orig === p);
+                const marker = L.marker([p.lat, p.lon], { icon: L.divIcon({ className: 'modern-marker', html: `<div style="width: 24px; height: 24px; background: var(--md-primary); border-radius: 50%; border: 3px solid white; box-shadow: var(--md-shadow);"></div>`, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -15] }) });
+                const whatsappNum = (p.whatsapp && p.whatsapp.length > 9) ? p.whatsapp : p.phone;
+                const adminButtons = isAdmin ? `
+                    <button class="popup-btn edit" data-index="${originalIndex}"><span class="material-symbols-outlined">edit</span>ערוך</button>
+                    <button class="popup-btn delete" data-index="${originalIndex}"><span class="material-symbols-outlined">delete</span>מחק</button>
+                ` : '';
+
+                marker.bindPopup(`
+                    <div class="popup-box">
+                        <div class="popup-name"><span class="material-symbols-outlined">person</span>${p.name}</div>
+                        <div class="popup-city">${p.city}</div>
+                        <div class="popup-phone">📞 ${p.phone}</div>
+                        <div class="popup-btns">
+                            <a href="tel:${p.phone}" class="popup-btn phone" target="_blank"><span class="material-symbols-outlined">call</span>צור קשר</a>
+                            <a href="https://wa.me/972${whatsappNum.slice(1)}" class="popup-btn whatsapp" target="_blank"><span class="material-symbols-outlined">chat</span>וואטסאפ</a>
+                            ${adminButtons}
+                        </div>
+                    </div>`);
+                markersLayer.addLayer(marker);
+            });
+            elements.participantCount.textContent = `${list.length} משתתפים`;
+        }
+        
+        // --- Filter Logic ---
+        function populateCityFilter() {
+            const cities = [...new Set(participants.map(user => user.city))].sort((a,b) => a.localeCompare(b, 'he'));
+            const currentCity = elements.cityFilter.value;
+            elements.cityFilter.innerHTML = '<option value="">כל הערים</option>';
+            cities.forEach(city => elements.cityFilter.innerHTML += `<option value="${city}">${city}</option>`);
+            elements.cityFilter.value = cities.includes(currentCity) ? currentCity : "";
+        }
+
+        function applyFilters() {
+            const searchTerm = elements.searchInput.value.trim().toLowerCase();
+            const selectedCity = elements.cityFilter.value;
+            let filtered = participants;
+            if (selectedCity) filtered = filtered.filter(p => p.city === selectedCity);
+            if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm) || p.phone.includes(searchTerm));
+            renderMarkers(filtered);
+        }
+
+        // --- Event Handlers ---
+        function handleAdminLogin() {
+            if (elements.adminPasswordInput.value === ADMIN_PASSWORD) {
+                setAdminMode(true);
+                elements.adminLoginModal.hidden = true;
+                elements.adminPasswordInput.value = '';
+                ToastManager.show('התחברת כמנהל בהצלחה!');
+            } else {
+                ToastManager.show('סיסמה שגויה!', 'error');
+            }
+        }
+        
+        function openUserForm(index = null) {
+            editIdx = index;
+            if (index !== null) {
+                const p = participants[index];
+                elements.userFormTitle.textContent = 'ערוך משתתף';
+                elements.userFirstName.value = p.firstName;
+                elements.userLastName.value = p.lastName;
+                elements.userCity.value = p.city;
+                elements.userPhone.value = p.phone;
+                elements.userWhatsapp.value = p.whatsapp;
+            } else {
+                elements.userFormTitle.textContent = 'הוסף משתתף';
+                elements.userFirstName.value = '';
+                elements.userLastName.value = '';
+                elements.userCity.value = '';
+                elements.userPhone.value = '';
+                elements.userWhatsapp.value = '';
+            }
+            elements.userFormModal.hidden = false;
+        }
+
+        function handleUserFormSave() {
+            // In a real app, you would send this data to the server/Google Sheet
+            // For this demo, we just manipulate the local array
+            const newUser = {
+                firstName: elements.userFirstName.value,
+                lastName: elements.userLastName.value,
+                name: `${elements.userFirstName.value} ${elements.userLastName.value}`.trim(),
+                city: elements.userCity.value,
+                phone: elements.userPhone.value,
+                whatsapp: elements.userWhatsapp.value,
+                // A real app would need to geocode the address to get lat/lon
+                lat: editIdx !== null ? participants[editIdx].lat : 32.0853,
+                lon: editIdx !== null ? participants[editIdx].lon : 34.7818,
+            };
+            if (!newUser.name || !newUser.city || !newUser.phone) {
+                return ToastManager.show('יש למלא שם, עיר וטלפון', 'error');
+            }
+
+            if (editIdx !== null) {
+                participants[editIdx] = newUser;
+                ToastManager.show('משתמש עודכן בהצלחה');
+            } else {
+                participants.push(newUser);
+                ToastManager.show('משתמש נוסף בהצלחה');
+            }
+            elements.userFormModal.hidden = true;
+            GoogleSheetsSync.updateUI();
+        }
+        
+        // --- Setup Event Listeners ---
+        elements.searchInput.addEventListener('input', applyFilters);
+        elements.cityFilter.addEventListener('change', applyFilters);
+        elements.adminLoginBtn.addEventListener('click', () => elements.adminLoginModal.hidden = false);
+        elements.adminLogoutBtn.addEventListener('click', () => { setAdminMode(false); ToastManager.show('התנתקת מהניהול'); });
+        elements.syncBtn.addEventListener('click', () => GoogleSheetsSync.loadData());
+        
+        elements.adminLoginSubmit.addEventListener('click', handleAdminLogin);
+        elements.adminCancel.addEventListener('click', () => elements.adminLoginModal.hidden = true);
+        
+        elements.addUserBtn.addEventListener('click', () => openUserForm(null));
+        elements.userSaveBtn.addEventListener('click', handleUserFormSave);
+        elements.userCancelBtn.addEventListener('click', () => elements.userFormModal.hidden = true);
+
+        elements.mapContainer.addEventListener('click', (e) => {
+            const target = e.target.closest('button[data-index]');
+            if (!target) return;
+            const index = parseInt(target.dataset.index, 10);
+            if (isNaN(index)) return;
+            
+            if (target.classList.contains('edit')) {
+                map.closePopup();
+                openUserForm(index);
+            } else if (target.classList.contains('delete')) {
+                if (confirm(`האם למחוק את ${participants[index].name}?`)) {
+                    map.closePopup();
+                    participants.splice(index, 1);
+                    GoogleSheetsSync.updateUI();
+                    ToastManager.show('משתמש נמחק');
+                }
+            }
+        });
+
+        // --- Initial Load ---
+        GoogleSheetsSync.loadData();
+        GoogleSheetsSync.startAutoSync();
+        window.addEventListener('resize', () => map.invalidateSize());
+        setTimeout(() => map.invalidateSize(), 400); // Final check after everything renders
+    });
+    </script>
+</body>
 </html>
