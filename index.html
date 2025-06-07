@@ -748,45 +748,50 @@
     
     <script>
         // Ensure all global variables and functions are declared at the top scope
-        let participants = [
-            // Original sample data
-            {name: 'נועה בר', city: 'תל אביב', lat: 32.0853, lon: 34.7818, phone: '0501111111', whatsapp: '0501111111'},
-            {name: 'דוד לוי', city: 'חיפה', lat: 32.7940, lon: 34.9896, phone: '0522222222', whatsapp: '0522222222'},
-            {name: 'רוני ישראלי', city: 'ירושלים', lat: 31.7683, lon: 35.2137, phone: '0533333333', whatsapp: '0533333333'},
-            {name: 'אור בן דוד', city: 'באר שבע', lat: 31.2518, lon: 34.7913, phone: '0544444444', whatsapp: '0544444444'},
-            {name: 'תמר שלו', city: 'אילת', lat: 29.5581, lon: 34.9482, phone: '0505555555', whatsapp: '0505555555'},
-            {name: 'יונתן כהן', city: 'נתניה', lat: 32.3215, lon: 34.8532, phone: '0506666666', whatsapp: '0506666666'},
-            {name: 'שירה מרקו', city: 'פתח תקווה', lat: 32.0879, lon: 34.8883, phone: '0507777777', whatsapp: '0507777777'},
-            {name: 'עמית רוזן', city: 'ראשון לציון', lat: 31.9730, lon: 34.7925, phone: '0508888888', whatsapp: '0508888888'},
-            {name: 'מיכל שמיר', city: 'הרצליה', lat: 32.1624, lon: 34.8441, phone: '0509999999', whatsapp: '0509999999'},
-            {name: 'אלון ברק', city: 'כפר סבא', lat: 32.1742, lon: 34.9063, phone: '0500000001', whatsapp: '0500000001'},
-            {name: 'רחל אביטל', city: 'רמת גן', lat: 32.0809, lon: 34.8199, phone: '0500000002', whatsapp: '0500000002'},
-            {name: 'גיל פרידמן', city: 'בני ברק', lat: 32.0809, lon: 34.8312, phone: '0500000003', whatsapp: '0500000003'},
-            {name: 'לילך גולן', city: 'רחובות', lat: 31.8968, lon: 34.8186, phone: '0500000004', whatsapp: '0500000004'},
-            {name: 'אסף אליהו', city: 'מודיעין', lat: 31.8970, lon: 35.0066, phone: '0500000005', whatsapp: '0500000005'},
-            {name: 'ענת לבי', city: 'קריית גת', lat: 31.6100, lon: 34.7642, phone: '0500000006', whatsapp: '0500000006'},
-            {name: 'רם צדוק', city: 'אשדוד', lat: 31.7948, lon: 34.6553, phone: '0500000007', whatsapp: '0500000007'},
-            {name: 'דנה אשכנזי', city: 'אשקלון', lat: 31.6688, lon: 34.5742, phone: '0500000008', whatsapp: '0500000008'},
-            {name: 'יעקב מזרחי', city: 'עכו', lat: 32.9253, lon: 35.0818, phone: '0500000009', whatsapp: '0500000009'},
-            {name: 'טליה גבע', city: 'נהריה', lat: 33.0073, lon: 35.0944, phone: '0500000010', whatsapp: '0500000010'},
-            {name: 'מאיר שושן', city: 'צפת', lat: 32.9650, lon: 35.4950, phone: '0500000011', whatsapp: '0500000011'},
-            {name: 'נירית אלמוג', city: 'טבריה', lat: 32.7940, lon: 35.5454, phone: '0500000012', whatsapp: '0500000012'},
-            {name: 'ישי אורן', city: 'בית שאן', lat: 32.4970, lon: 35.4990, phone: '0500000013', whatsapp: '0500000013'},
-            {name: 'שלומית דן', city: 'עפולה', lat: 32.6073, lon: 35.2889, phone: '0500000014', whatsapp: '0500000014'},
-            {name: 'רובי אבן', city: 'נצרת', lat: 32.7018, lon: 35.3034, phone: '0500000015', whatsapp: '0500000015'},
-            {name: 'יעל ברוך', city: 'דימונה', lat: 31.0686, lon: 35.0330, phone: '0500000016', whatsapp: '0500000016'},
-            {name: 'איתמר רגב', city: 'ערד', lat: 31.2587, lon: 35.2130, phone: '0500000017', whatsapp: '0500000017'},
-            {name: 'חגית נחום', city: 'מצפה רמון', lat: 30.6093, lon: 34.8017, phone: '0500000018', whatsapp: '0500000018'},
-            {name: 'אריאל כץ', city: 'קריית שמונה', lat: 33.2090, lon: 35.5695, phone: '0500000019', whatsapp: '0500000019'},
-            {name: 'מרב דוד', city: 'בית שמש', lat: 31.7530, lon: 35.0066, phone: '0500000020', whatsapp: '0500000020'},
-            {name: 'אילן מנור', city: 'לוד', lat: 31.9516, lon: 34.8882, phone: '0500000021', whatsapp: '0500000021'},
-            {name: 'קרן אטיאס', city: 'רמלה', lat: 31.9299, lon: 34.8670, phone: '0500000022', whatsapp: '0500000022'},
-            {name: 'דור ביטון', city: 'יבנה', lat: 31.8770, lon: 34.7370, phone: '0500000023', whatsapp: '0500000023'},
-            {name: 'הדס לוין', city: 'גדרה', lat: 31.8160, lon: 34.7751, phone: '0500000024', whatsapp: '0500000024'},
-            {name: 'עידו פלג', city: 'קריית מלאכי', lat: 31.7303, lon: 34.7453, phone: '0500000025', whatsapp: '0500000025'},
-            {name: 'רונית שפיר', city: 'קריית ביאליק', lat: 32.8298, lon: 35.0889, phone: '0500000026', whatsapp: '0500000026'}
+        let participants = []; // Start with an empty array to be populated by data loading logic
+
+        // The actual list of 36 participants from your Google Sheet screenshot will be inserted here
+        // This acts as the final fallback if both Google Sheets and localStorage fail.
+        const actualParticipantsData = [
+            { name: 'רני אורן', firstName: 'רני', lastName: 'אורן', city: 'עדי', lat: 32.7836, lon: 35.0594, phone: '0522420453', whatsapp: '0522420453' },
+            { name: 'הילה אשכנזי', firstName: 'הילה', lastName: 'אשכנזי', city: 'כפר סבא', lat: 32.1742, lon: 34.9063, phone: '0548008647', whatsapp: '0548008647' },
+            { name: 'אנה בובקו', firstName: 'אנה', lastName: 'בובקו', city: 'הרצליה', lat: 32.1624, lon: 34.8441, phone: '0528085637', whatsapp: '0528085637' },
+            { name: 'בר גוטמן', firstName: 'בר', lastName: 'גוטמן', city: 'פתח תקווה', lat: 32.0879, lon: 34.8883, phone: '0545867522', whatsapp: '0545867522' },
+            { name: 'שירה גולדנברג אורן', firstName: 'שירה', lastName: 'גולדנברג אורן', city: 'תל אביב', lat: 32.0853, lon: 34.7818, phone: '054488746', whatsapp: '054488746' },
+            { name: 'גלית גולן', firstName: 'גלית', lastName: 'גולן', city: 'עדי', lat: 32.7836, lon: 35.0594, phone: '0522420452', whatsapp: '05222420452' },
+            { name: 'נועה גלילוב', firstName: 'נועה', lastName: 'גלילוב', city: 'בית חשמונאי', lat: 31.8679, lon: 34.9926, phone: '0585566005', whatsapp: '0585566005' },
+            { name: 'מרים זמנאיי גלה', firstName: 'מרים', lastName: 'זמנאיי', city: 'יבנה', lat: 31.8770, lon: 34.7370, phone: '0512863296', whatsapp: '0512863296' },
+            { name: 'עדן גלילוב', firstName: 'עדן', lastName: 'גלילוב', city: 'חיפה', lat: 32.7940, lon: 34.9896, phone: '0526557027', whatsapp: '0526557027' },
+            { name: 'עמית גפני', firstName: 'עמית', lastName: 'גפני', city: 'נתניה', lat: 32.3215, lon: 34.8532, phone: '0556654244', whatsapp: '0556654244' },
+            { name: 'יובל דדון', firstName: 'יובל', lastName: 'דדון', city: 'קריית מוצקין', lat: 32.8583, lon: 35.0708, phone: '0549056171', whatsapp: '0549056171' },
+            { name: 'הילה הרלי', firstName: 'הילה', lastName: 'הרלי', city: 'כפר סבא', lat: 32.1742, lon: 34.9063, phone: '0542631959', whatsapp: '0542631959' },
+            { name: 'הדר וזאני', firstName: 'הדר', lastName: 'וזאני', city: 'יבנה', lat: 31.8770, lon: 34.7370, phone: '0508699736', whatsapp: '0508699736' },
+            { name: 'חיה זגרון', firstName: 'חיה', lastName: 'זגרון', city: 'באר שבע', lat: 31.2518, lon: 34.7913, phone: '0522703301', whatsapp: '0522703301' },
+            { name: 'מיקה זילברברג', firstName: 'מיקה', lastName: 'זילברברג', city: 'ירושלים', lat: 31.7683, lon: 35.2137, phone: '0547689979', whatsapp: '0547689979' },
+            { name: 'דנה חזן', firstName: 'דנה', lastName: 'חזן', city: 'קיבוץ נגבה', lat: 31.6441, lon: 34.7077, phone: '0548357500', whatsapp: '0548357500' },
+            { name: 'ספיר יחזקאל', firstName: 'ספיר', lastName: 'יחזקאל', city: 'באר יעקוב', lat: 31.9312, lon: 34.8396, phone: '0549844472', whatsapp: '0549844472' },
+            { name: 'ורד יעקבי', firstName: 'ורד', lastName: 'יעקבי', city: 'שמשית', lat: 32.7099, lon: 35.1950, phone: '0548045636', whatsapp: '0548045636' },
+            { name: 'הדר יעקבי', firstName: 'הדר', lastName: 'יעקבי', city: 'שמשית', lat: 32.7099, lon: 35.1950, phone: '0548318389', whatsapp: '0548318389' },
+            { name: 'לימור יצחק', firstName: 'לימור', lastName: 'יצחק', city: 'נס ציונה', lat: 34.7891, lon: 34.7997, phone: '0523405095', whatsapp: '0523405095' },
+            { name: 'נועה כהן', firstName: 'נועה', lastName: 'כהן', city: 'בנימינה', lat: 32.5029, lon: 34.9525, phone: '0532794929', whatsapp: '0532794929' },
+            { name: 'מיטל כץ', firstName: 'מיטל', lastName: 'כץ', city: 'מודיעין', lat: 31.8970, lon: 35.0066, phone: '0526578078', whatsapp: '0526578078' },
+            { name: 'רן לוי', firstName: 'רן', lastName: 'לוי', city: 'ראשל"צ', lat: 31.9730, lon: 34.7925, phone: '0503464045', whatsapp: '0503464045' },
+            { name: 'שירה לוי', firstName: 'שירה', lastName: 'לוי', city: 'קרית ביאליק', lat: 32.8298, lon: 35.0889, phone: '0526122460', whatsapp: '0526122460' },
+            { name: 'ליאור לוי', firstName: 'ליאור', lastName: 'לוי', city: 'קריית שמונה', lat: 33.2090, lon: 35.5695, phone: '0526547604', whatsapp: '0526547604' },
+            { name: 'דורין לי לוי', firstName: 'דורין לי', lastName: 'לוי', city: 'ראשון לציון', lat: 31.9730, lon: 34.7925, phone: '0508221128', whatsapp: '0508221128' },
+            { name: 'מיה ליטמנוביץ', firstName: 'מיה', lastName: 'ליטמנוביץ', city: 'נטעים', lat: 31.8790, lon: 34.7080, phone: '0525554803', whatsapp: '0525554803' }, // Netaim coords
+            { name: 'יעל לנדאו', firstName: 'יעל', lastName: 'לנדאו', city: 'נוה צוף', lat: 32.0298, lon: 35.0381, phone: '0545070548', whatsapp: '0545070548' }, // Naveh Tzuf coords
+            { name: 'עומר מנור', firstName: 'עומר', lastName: 'מנור', city: 'מושב ביצרון', lat: 31.7850, lon: 34.7570, phone: '0545552463', whatsapp: '0545552463' },
+            { name: 'יוסי עמר', firstName: 'יוסי', lastName: 'עמר', city: 'חצור הגלילית', lat: 32.9738, lon: 35.5683, phone: '0506468842', whatsapp: '0506468842' },
+            { name: 'נורית פוקס', firstName: 'נורית', lastName: 'פוקס', city: 'שמשית', lat: 32.7099, lon: 35.1950, phone: '0544681134', whatsapp: '0544681134' },
+            { name: 'אלה פיקל', firstName: 'אלה', lastName: 'פיקל', city: 'מודיעין', lat: 31.8970, lon: 35.0066, phone: '0542565752', whatsapp: '0542565752' },
+            { name: 'אוראל פנקר', firstName: 'אוראל', lastName: 'פנקר', city: 'רמלה', lat: 31.9299, lon: 34.8670, phone: '0545661176', whatsapp: '0545661176' },
+            { name: 'אליה פרבר', firstName: 'אליה', lastName: 'פרבר', city: 'תל אביב', lat: 32.0853, lon: 34.7818, phone: '0507917995', whatsapp: '0507917995' },
+            { name: 'חני פרלה', firstName: 'חני', lastName: 'פרלה', city: 'בית דגן', lat: 32.0005, lon: 34.8529, phone: '0526897300', whatsapp: '0526897300' },
+            { name: 'אוקסנה קולסניק', firstName: 'אוקסנה', lastName: 'קולסניק', city: 'יבנה', lat: 31.8770, lon: 34.7370, phone: '0508322332', whatsapp: '0508322332' },
         ];
-        window.participants = participants; // Make participants array globally accessible
+        // Make participants array globally accessible
+        window.participants = participants;
 
         let admin = false;
         const adminPassword = "1234";
@@ -894,15 +899,9 @@
             popupAnchor: [0, -36]
         });
 
-        // אלמנטים
-        const adminModal = document.getElementById('admin-login-modal');
-        const userModal = document.getElementById('user-form-modal');
-        const addBtn = document.getElementById('add-user-btn');
-        const adminControls = document.getElementById('admin-controls');
-        const searchInput = document.getElementById('search-input');
-        const participantCount = document.getElementById('participant-count');
-        const fileInput = document.getElementById('file-input');
-        const cityFilter = document.getElementById('city-filter');
+        // Declare element variables at the top, assign in DOMContentLoaded
+        let adminModal, userModal, addBtn, adminControls, searchInput, participantCount, fileInput, cityFilter, resetViewFab;
+
 
         // פונקציות עזר (גלובליות)
         function distance(lat1, lon1, lat2, lon2) {
@@ -918,12 +917,13 @@
         async function geocodeCity(city) {
             try {
                 console.log(`🔍 מחפש מיקום עבור: ${city}`);
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city + ', ישראל')}`;
-                const resp = await fetch(url, {headers: {'Accept-Language': 'he'}});
-                const data = await resp.json();
-                if (data && data.length > 0) {
-                    console.log(`✅ נמצא מיקום עבור ${city}`);
-                    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+                // Using Nominatim as it's free and robust enough for this use case.
+                const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city + ', ישראל')}`;
+                const nominatimResp = await fetch(nominatimUrl, {headers: {'Accept-Language': 'he'}});
+                const nominatimData = await nominatimResp.json();
+                if (nominatimData && nominatimData.length > 0) {
+                    console.log(`✅ נמצא מיקום עבור ${city} (Nominatim)`);
+                    return { lat: parseFloat(nominatimData[0].lat), lon: parseFloat(nominatimData[0].lon) };
                 }
                 throw new Error('לא נמצא מיקום לעיר שהוזנה');
             } catch (error) {
@@ -934,11 +934,13 @@
         }
 
         function updateParticipantCount() {
-            participantCount.textContent = `${participants.length} משתתפים`;
-            console.log(`📊 עודכן מספר משתתפים: ${participants.length}`);
+            if (participantCount) { // Ensure element is defined before accessing
+                participantCount.textContent = `${participants.length} משתתפים`;
+                console.log(`📊 עודכן מספר משתתפים: ${participants.length}`);
+            }
         }
 
-        // --- Start of Google Sheets Sync object (as per original script.js) ---
+        // --- Start of Google Sheets Sync object ---
         const SHEET_CONFIG = { participantsUrl: 'https://docs.google.com/spreadsheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv', syncInterval: 60000 };
         let syncTimer = null; // Defined here for global accessibility
 
@@ -948,20 +950,37 @@
                 if(document.getElementById('sync-btn')?.querySelector('.material-symbols-outlined')) {
                     document.getElementById('sync-btn').querySelector('.material-symbols-outlined').style.animation = 'spin 1s linear infinite';
                 }
+                console.log(`🔄 מתחיל טעינת נתונים מגיליון גוגל: ${url}`);
                 try {
                     const response = await fetch(url);
-                    if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`❌ שגיאת רשת בטעינת גיליון גוגל: ${response.status} - ${response.statusText}`, errorText);
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
+                    }
                     const csvText = await response.text();
+                    console.log(`✅ גיליון גוגל נטען בהצלחה. אורך טקסט: ${csvText.length}`);
+                    console.log(`📋 ניתוח CSV מתחיל...`);
+
                     const rows = this.parseCSV(csvText);
-                    if (rows.length < 2) throw new Error('No data or only headers in sheet');
+                    if (rows.length < 2) {
+                        console.warn('⚠️ אין מספיק נתונים בגיליון (רק כותרות או ריק).');
+                        throw new Error('No data or only headers in sheet');
+                    }
                     
                     const headers = rows[0].map(h => h.trim()); 
+                    console.log('✅ כותרות CSV:', headers);
                     const fetchedParticipants = rows.slice(1).map(row => {
                         const obj = {}; 
                         headers.forEach((h, i) => obj[h] = row[i] || '');
                         
                         const lat = parseFloat(obj['Lat']);
                         const lon = parseFloat(obj['Lon']);
+
+                        // Validate lat/lon conversion
+                        if (isNaN(lat) || isNaN(lon)) {
+                            console.warn(`⚠️ שגיאת המרה: Lat/Lon לא חוקיים עבור רשומה: ${obj['שם פרטי']} ${obj['עיר']}. Lat: ${obj['Lat']}, Lon: ${obj['Lon']}`);
+                        }
 
                         return { 
                             name: `${obj['שם פרטי'] || ''} ${obj['שם משפחה'] || ''}`.trim(), 
@@ -973,8 +992,9 @@
                             phone: this.formatPhone(obj['מספר טלפון']), 
                             whatsapp: this.formatPhone(obj['מספר ווצאפ'] || obj['מספר WhatsApp'])
                         };
-                    }).filter(p => p.name && p.lat !== null && p.lon !== null); 
+                    }).filter(p => p.name && p.lat !== null && p.lon !== null); // Filter out entries with invalid lat/lon
 
+                    console.log(`✅ ניתוח CSV הושלם. נמצאו ${fetchedParticipants.length} משתתפים תקפים.`);
                     window.participants = fetchedParticipants; 
                     StorageManager.save(); 
                     if (isManual) ToastManager.show(`סונכרנו ${window.participants.length} משתתפים מגיליון גוגל.`, 'success');
@@ -993,19 +1013,26 @@
                 }
             },
             parseCSV(csvText) {
-                const lines = csvText.split(/\r\n|\n/).filter(line => line.trim() !== ''); 
-                return lines.map(line => {
-                    const result = []; let current = ''; let inQuotes = false;
-                    for (let i = 0; i < line.length; i++) {
-                        const char = line[i]; const nextChar = line[i+1];
-                        if (char === '"' && inQuotes && nextChar === '"') { current += '"'; i++; } 
-                        else if (char === '"') { inQuotes = !inQuotes; } 
-                        else if (char === ',' && !inQuotes) { result.push(current.trim().replace(/^"|"$/g, '')); current = ''; } 
-                        else { current += char; }
+                const lines = csvText.split(/\r\n|\n/).filter(line => line.trim() !== '');
+                if (lines.length === 0) return []; // Handle empty CSV text
+                
+                const parsedRows = [];
+                // Regex to handle commas inside quotes
+                const csvRegex = /(?:^|,)(?:"([^"]*(?:""[^"]*)*)"|([^,]*))/g;
+
+                lines.forEach(line => {
+                    const row = [];
+                    // Reset regex lastIndex for each line
+                    csvRegex.lastIndex = 0; 
+                    while ((match = csvRegex.exec(line)) !== null) {
+                        // If a quoted value (group 1) exists, use it. Otherwise, use unquoted (group 2).
+                        // Handle escaped quotes (e.g., "" becomes ")
+                        let value = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
+                        row.push(value.trim());
                     }
-                    result.push(current.trim().replace(/^"|"$/g, ''));
-                    return result;
+                    parsedRows.push(row);
                 });
+                return parsedRows;
             },
             formatPhone(phone) { 
                 if (!phone) return ''; 
@@ -1025,11 +1052,13 @@
 
 
         function populateCityFilter() { 
-            const cities = [...new Set(participants.map(user => user.city))].sort((a,b) => a.localeCompare(b, 'he')); 
-            const currentCity = cityFilter.value; 
-            cityFilter.innerHTML = '<option value="">כל הערים</option>'; 
-            cities.forEach(city => cityFilter.innerHTML += `<option value="${city}">${city}</option>`); 
-            cityFilter.value = cities.includes(currentCity) ? currentCity : ""; 
+            if (cityFilter) { 
+                const cities = [...new Set(participants.map(user => user.city))].sort((a,b) => a.localeCompare(b, 'he')); 
+                const currentCity = cityFilter.value; 
+                cityFilter.innerHTML = '<option value="">כל הערים</option>'; 
+                cities.forEach(city => cityFilter.innerHTML += `<option value="${city}">${city}</option>`); 
+                cityFilter.value = cities.includes(currentCity) ? currentCity : ""; 
+            }
         }
 
         let markers = L.markerClusterGroup(); 
@@ -1037,11 +1066,11 @@
         function renderMarkers(list = participants) {
             console.log("🗺️ מציג סמנים על המפה...");
             
-            // Re-initialize markers group for each renderMarkers call
+            // Clear all existing markers from the map AND the cluster group
             if (markers) {
                 map.removeLayer(markers);
             }
-            markers = L.markerClusterGroup(); // Initialize MarkerClusterGroup here
+            markers = L.markerClusterGroup(); // Re-initialize MarkerClusterGroup for fresh render
 
             const groupedLocations = {};
             list.forEach(p => {
@@ -1066,7 +1095,7 @@
 
                     // Apply a small deterministic offset for markers at the exact same location
                     // This creates a "spiderfy" effect when the cluster expands
-                    const offsetMagnitude = 0.00005; // Smaller offset for finer spread
+                    const offsetMagnitude = 0.00005 * (indexInGroup + 1); // Increase offset for more items
                     const angleStep = (2 * Math.PI) / group.length;
                     const angle = indexInGroup * angleStep;
                     const offsetX = offsetMagnitude * Math.cos(angle);
@@ -1415,7 +1444,7 @@
             });
         });
 
-        // חיפוש
+            // חיפוש
         searchInput.addEventListener('input', function() {
             const val = this.value.trim().toLowerCase();
             console.log(`🔍 חיפוש: "${val}"`);
@@ -1440,31 +1469,14 @@
             }
         });
 
-        // אתחול ראשוני
-        window.addEventListener('resize', () => { map.invalidateSize(); });
-        setTimeout(() => { map.invalidateSize(); }, 500);
+        // Event listener for the reset view FAB
+        resetViewFab.addEventListener('click', () => {
+            map.setView([31.5, 34.75], 8); // Reset to Israel center and zoom
+            ToastManager.show('הצגת מפה אופסה למרכז ישראל', 'info');
+        });
 
-        // טעינת נתונים מ-localStorage או שימוש בברירת מחדל
-        console.log("🚀 מתחיל עיבוד נתונים ראשוני...");
-        if (!StorageManager.load()) {
-            console.log("📦 משתמש בנתונים לדוגמה");
-            StorageManager.save(); // שמירה ראשונית
-        }
-
-        renderMarkers();
-        updateParticipantCount();
+        GoogleSheetsSync.startAutoSync(); // Start periodic syncing AFTER initial load attempt
         console.log("✅ אפליקציית מאיה מוכנה לשימוש!");
-
-        // הוספת CSS לאנימציית slideOut (Original location)
-        const additionalCSS = `
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-        `;
-        const style = document.createElement('style');
-        style.innerHTML = additionalCSS;
-        document.head.appendChild(style);
 
         // 📊 סטטיסטיקות למפתחים
         console.log(`
@@ -1473,19 +1485,14 @@
         🔐 מצב אדמין: ${admin ? 'מחובר' : 'מנותק'}
         🗺️ מרכז מפה: [31.5, 34.75]
         🎨 עיצוב: Material Design 3 מתקדם
-        📱 רספונסיבי: מותאם למובייל בלבד
+        � רספונסיבי: מותאם למובייל בלבד
         🔍 חיפוש: זמין
         🚗 נסיעות משותפות: זמין
         📊 יבוא/יצוא Excel: זמין לאדמין
         💾 אחסון: localStorage
         🔐 הגנת אדמין: מתקדמת
         `);
-
-        // Handle click on reset view FAB - added by Gemini, adjusted for Leaflet
-        document.getElementById('reset-view-fab').addEventListener('click', () => {
-            map.setView([31.5, 34.75], 8); // Reset to Israel center and zoom
-            ToastManager.show('הצגת מפה אופסה למרכז ישראל', 'info');
-        });
     </script>
 </body>
 </html>
+�
