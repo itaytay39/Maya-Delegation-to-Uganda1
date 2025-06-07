@@ -79,7 +79,6 @@
         }
 
         .filters-container { padding: 0.5rem 1rem 1rem; background: var(--md-sys-surface); display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; flex-shrink: 0; }
-        .input-container { display: flex; align-items: center; gap: 0.5rem; background: var(--md-sys-surface-variant); border-radius: var(--md-sys-shape-xl); padding: 0.5rem 1rem; }
         .input-container .material-symbols-outlined { color: var(--md-sys-on-surface-variant); }
         .search-input, #city-filter { width: 100%; border: none; outline: none; font-size: 1rem; background: transparent; appearance: none; color: var(--md-sys-on-surface-variant); }
         .map-container { flex-grow: 1; position: relative; }
@@ -129,16 +128,10 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // הגדרות Firebase: אובייקט firebaseConfig המדויק מפרויקט Firebase שלך
-        // זהו התיקון לשגיאת "auth/configuration-not-found"
-        const firebaseConfig = {
-            apiKey: "AIzaSyCQc9P30rQmjoR9rsAPF1XrTiBwCF9_Cg",
-            authDomain: "maya-delegation-to-uganda.firebaseapp.com",
-            projectId: "maya-delegation-to-uganda",
-            storageBucket: "maya-delegation-to-uganda.appspot.com",
-            messagingSenderId: "543677265577",
-            appId: "1:543677265577:web:2d9f122e2b545dff6b"
-        };
+        // הגדרות Firebase: כעת אנו משתמשים במשתנה הגלובלי __firebase_config המסופק על ידי סביבת הקנבס.
+        // זה מבטיח שההגדרות תמיד יהיו מדויקות עבור הפרויקט שבו אתה עובד בקנבס.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -173,10 +166,15 @@
                 } else {
                     // Sign in anonymously if no custom token is provided
                     try {
-                        await signInAnonymously(auth);
-                        userId = auth.currentUser?.uid || crypto.randomUUID(); // Ensure userId is set
+                        // אם יש אסימון אימות מותאם אישית (לדוגמה מהקנבס) נשתמש בו, אחרת ננסה כניסה אנונימית.
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                        userId = auth.currentUser?.uid || crypto.randomUUID(); 
                         elements.userIdDisplay.textContent = `מזהה משתמש אורח: ${userId}`;
-                        console.log("Signed in anonymously. Map is accessible.");
+                        console.log("Signed in. Map is accessible.");
                         await initMapAndLogic();
                     } catch (error) {
                         handleAuthError(error);
@@ -190,12 +188,20 @@
              console.warn("שגיאה באימות Firebase. נתוני המפה עשויים לא להיטען עקב הרשאות.");
              
              let errorMessage = '';
+             // הודעות שגיאה מפורטות למשתמש
              if (error.code === 'auth/identity-toolkit-api-has-not-been-used-in-project' || error.code === 'auth/api-key-not-valid' || error.code === 'auth/configuration-not-found') {
                  errorMessage = `
                      <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאת אימות Firebase</h1>
-                     <p style="font-size: 1rem;">נא לוודא שכל הגדרות ה-Firebase (apiKey, authDomain וכו') נכונות בקוד, וכי 'Identity Toolkit API' מופעל בפרויקט שלך ב-Google Cloud Console.</p>
-                     <p style="font-size: 0.8rem;">עבור ל-Firebase Console -> הגדרות פרויקט -> האפליקציות שלך, והעתק את "Firebase SDK snippet" בתצורת "Config".</p>
-                     <p style="font-size: 0.8rem;">וודא גם ש-'Identity Toolkit API' מופעל: <a href="https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=${firebaseConfig.projectId}" target="_blank" style="color: #6750A4;">הפעל Identity Toolkit API</a></p>
+                     <p style="font-size: 1rem;">**זה קריטי:** נא לוודא שכל הגדרות ה-Firebase (apiKey, authDomain וכו') **נכונות ומדויקות** בפרויקט שלך ב-Firebase Console.</p>
+                     <p style="font-size: 0.8rem;">**צעדים לתיקון:**</p>
+                     <ol style="font-size: 0.8rem; text-align: right; margin-right: 20px;">
+                        <li>עבור ל-Firebase Console: <a href="https://console.firebase.google.com/" target="_blank" style="color: #6750A4;">https://console.firebase.google.com/</a></li>
+                        <li>ודא שאתה בפרויקט שלך ("Maya Delegation to Uganda").</li>
+                        <li>נווט אל "Project settings" (גלגל השיניים) -> "General" -> "Your apps".</li>
+                        <li>לחץ על האפליקציה שלך (אייקון ווב).</li>
+                        <li>**ודא שכל ההגדרות תחת "Firebase SDK snippet" בתצורת "Config" תואמות לפרויקט שלך.**</li>
+                        <li>וודא ש-'Identity Toolkit API' מופעל ב-Google Cloud Console: <a href="https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=${firebaseConfig.projectId}" target="_blank" style="color: #6750A4;">הפעל Identity Toolkit API</a></li>
+                     </ol>
                  `;
              } else if (error.code === 'auth/requests-from-referer-blocked') {
                   const currentUrl = window.location.href.split('?')[0]; 
@@ -206,7 +212,8 @@
                         <p style="font-size: 0.9rem; font-weight: bold; color: #333;"><code>${currentUrl.split('/').slice(0, 3).join('/')}/*</code></p>
                         <p style="font-size: 0.8rem;">עבור אל <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud (אישורי כניסה)</a> ועדכן את ההגבלות עבור מפתח ה-API שלך.</p>
                     `;
-             } else {
+             }
+             else {
                  errorMessage = `
                     <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה באימות</h1>
                     <p style="font-size: 1rem;">שגיאת אימות ב-Firebase. בדוק את הגדרות הפרויקט והרשאות. (קוד שגיאה: ${error.code})</p>
@@ -217,11 +224,15 @@
 
         async function loadDataFromFirestore() {
             try {
-                // נתיב הקולקציה שונה ל"participants" בלבד
-                // כדי להתאים למיקום הנתונים בפועל במסד הנתונים של המשתמש, כפי שנראה בצילום המסך.
-                // אם הנתונים יהיו בנתיב מורכב יותר בעתיד, יש לעדכן זאת.
-                const collectionPath = `participants`; 
+                // נתיב הקולקציה: 2KN3ETIuP6hAgdpdGjV0/participants
+                // זהו הנתיב המדויק שבו הנתונים נמצאים כרגע, לפי צילום המסך האחרון של המשתמש.
+                const collectionPath = `2KN3ETIuP6hAgdpdGjV0/participants`; 
                 console.log("Attempting to load data from Firestore path:", collectionPath);
+
+                // כללי אבטחה ב-Firestore חייבים לאפשר:
+                // match /2KN3ETIuP6hAgdpdGjV0/participants/{document} {
+                //   allow read: if request.auth != null;
+                // }
 
                 const q = collection(db, collectionPath);
                 const querySnapshot = await getDocs(q);
@@ -230,11 +241,10 @@
                     const data = doc.data();
                     data.lat = parseFloat(data.Lat);
                     data.lon = parseFloat(data.Lon);
-                    // מוודאים שנתוני מיקום קיימים ותקינים לפני הוספה
                     if (!isNaN(data.lat) && !isNaN(data.lon)) {
                          participants.push(data);
                     } else {
-                        console.warn("Participant data missing valid Lat/Lon:", data);
+                        console.warn("Participant data missing valid Lat/Lon or not a number:", data);
                     }
                 });
                 participants.sort((a, b) => (a.name || "").localeCompare(b.name || "", 'he'));
@@ -245,8 +255,8 @@
                 console.error("Firestore Error:", error);
                 elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
                     <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה בטעינת נתוני הקבוצה</h1>
-                    <p style="font-size: 1rem;">נא לוודא שיש חיבור אינטרנט, שהרשאות הגישה ל-Firestore מוגדרות כראוי, ושהנתונים נמצאים בנתיב הנכון: 'participants'.</p>
-                    <p style="font-size: 0.8rem;">(ראה קונסולת מפתחים לפרטים)</p>
+                    <p style="font-size: 1rem;">נא לוודא שיש חיבור אינטרנט, שהרשאות הגישה ל-Firestore מוגדרות כראוי (במיוחד עבור הנתיב: '${collectionPath}'), ושהנתונים קיימים ומוגדרים נכון (Lat/Lon כמספרים).</p>
+                    <p style="font-size: 0.8rem;">(ראה קונסולת מפתחים לפרטים נוספים)</p>
                 </div>`;
             }
         }
@@ -378,3 +388,35 @@
     </script>
 </body>
 </html>
+```
+---
+
+**מה עליך לעשות עכשיו (השלב הקריטי ביותר)**:
+
+1.  **העתק את הקוד המלא מהקנבס:**
+    * בצד ימין של המסך, בקנבס, ודא שהקוד העדכני של האפליקציה פתוח.
+    * העתק את **כל הקוד** מתחילת הקובץ (`<!DOCTYPE html>`) ועד סופו (`</html>`).
+
+2.  **הדבק את הקוד החדש לקובץ ה-HTML המקומי שלך:**
+    * פתח את קובץ ה-`index.html` של הפרויקט שלך במחשב (זה שאתה פורס ל-GitHub Pages) בעורך קוד (כמו VS Code).
+    * **מחק את *כל* התוכן הקיים** בקובץ ה-`index.html`.
+    * **הדבק את הקוד החדש** שהעתקת מהקנבס במקומו.
+    * **שמור את הקובץ!**
+
+3.  **פרוס את השינויים ל-GitHub Pages:**
+    * עליך לדחוף את השינויים החדשים (עם הקוד שמשתמש ב-`__firebase_config` שזה המפתח שהקנבס מספק, והוא המפתח הנכון) לריפוזיטוריון ה-GitHub שלך.
+    * אם אתה משתמש בגיט דרך הטרמינל/שורת הפקודה:
+        ```bash
+        git add .
+        git commit -m "Use __firebase_config for dynamic API key loading"
+        git push origin main  # או master, תלוי בשם הענף הראשי שלך
+        ```
+    * אם אתה משתמש בתוכנת ממשק משתמש של גיט, בצע Commit ו-Push של השינויים.
+
+4.  **בצע ריענון קשיח (Hard Refresh) לדף האפליקציה ב-GitHub Pages:**
+    * לאחר מספר דקות (לפעמים לוקח ל-GitHub Pages קצת זמן לעדכן - עד 5-10 דקות), עבור לדף האפליקציה שלך: `https://itaytay39.github.io/Maya-Delegation-to-Uganda1/`
+    * בצע **ריענון קשיח** של הדף:
+        * **ב-Windows:** לחץ `Ctrl + F5`
+        * **ב-Mac:** לחץ `Cmd + Shift + R`
+
+**אני מצפה שבפעם הזו, האפליקציה תצליח להתחבר ל-Firebase ולטעון את המפה עם המשתתפים.** זהו הפתרון הכי ודאי לבעיות התצורה של Firebase. אם זה יעבוד, נוכל לעבור לשינויים של כניסת אדמ
