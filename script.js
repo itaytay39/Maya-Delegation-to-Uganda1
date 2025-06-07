@@ -249,6 +249,17 @@ const createMarkerIcon = () => L.divIcon({
     popupAnchor: [0, -36]
 });
 
+// פונקציית עזר לחישוב מרחק (הוחזרה)
+function distance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Radius of Earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
 // עדכון מספר משתתפים
 function updateParticipantCount() {
     const countElement = document.getElementById('participant-count');
@@ -261,7 +272,7 @@ function updateParticipantCount() {
 function renderMarkers(list = participants) {
     console.log("🗺️ מציג סמנים על המפה...");
     
-    // ניקוי סמנים קיימים
+    // ניקוי סמנים קיימים מקבוצת הסמנים
     markers.clearLayers();
     
     // הוספת סמנים חדשים
@@ -271,6 +282,20 @@ function renderMarkers(list = participants) {
         const whatsappNum = (p.whatsapp && p.whatsapp.length > 0) ? p.whatsapp : p.phone;
         const hasWhatsapp = whatsappNum && whatsappNum.length >= 9;
         
+        // לוגיקה לזיהוי משתמשים קרובים (הוחזרה)
+        let nearby = null;
+        for (let j = 0; j < participants.length; j++) {
+            const other = participants[j];
+            // ודא שלא משווים את המשתמש לעצמו, ושקואורדינטות קיימות
+            if (other === p || !other.lat || !other.lon) continue;
+            
+            // נניח ש"קרוב" זה בטווח 10 ק"מ
+            if (distance(p.lat, p.lon, other.lat, other.lon) <= 10) {
+                nearby = other;
+                break;
+            }
+        }
+
         const popup = `
             <div class="popup-box">
                 <div class="popup-name">
@@ -288,7 +313,7 @@ function renderMarkers(list = participants) {
                         צור קשר
                     </a>
                     ${hasWhatsapp ? `
-                    <a href="https://wa.me/972${whatsappNum.replace(/^0/,'')}" class="popup-btn whatsapp" target="_blank">
+                    <a href="https://wa.me/972${whatsappNum.replace(/^0/,'')}?text=${encodeURIComponent(`היי ${p.firstName}, אשמח לתאם נסיעה משותפת למשלחת מאיה לאוגנדה! 🚗`)}" class="popup-btn whatsapp" target="_blank">
                         <span class="material-symbols-outlined">chat</span>
                         וואטסאפ
                     </a>
@@ -303,16 +328,22 @@ function renderMarkers(list = participants) {
                         מחק
                     </button>
                     ` : ''}
+                    ${nearby && hasWhatsapp ? `
+                    <button class="popup-btn carpool" onclick="suggestCarpool('${p.name}', '${whatsappNum}')">
+                        <span class="material-symbols-outlined">directions_car</span>
+                        הצע נסיעה משותפת
+                    </button>
+                    ` : ''}
                 </div>
             </div>
         `;
         
         const marker = L.marker([p.lat, p.lon], {icon: createMarkerIcon()});
         marker.bindPopup(popup, {closeButton: true, maxWidth: 350});
-        markers.addLayer(marker); // Modified line: Add marker to cluster group
+        markers.addLayer(marker); // הוספת הסמן לקבוצת הסמנים
     });
     
-    map.addLayer(markers); // New line: Add the cluster group to the map
+    map.addLayer(markers); // הוספת קבוצת הסמנים למפה
     
     console.log(`✅ הוצגו ${list.length} סמנים על המפה`);
 }
@@ -354,6 +385,13 @@ window.deleteUser = function(idx) {
     }
 };
 
+window.suggestCarpool = function(name, phone) {
+    console.log(`🚗 הצעת נסיעה משותפת ל: ${name}`);
+    const message = encodeURIComponent(`היי ${name}, רוצה לתאם נסיעה משותפת למשלחת מאיה לאוגנדה? 🚗✈️🇺🇬`);
+    window.open(`https://wa.me/972${phone.replace(/^0/,'')}?text=${message}`, '_blank');
+};
+
+
 // מערכת אדמין
 function setAdminMode(isAdminMode) {
     admin = isAdminMode;
@@ -384,6 +422,9 @@ function initTrivia() {
     const triviaBtn = document.getElementById('trivia-btn');
     const triviaBox = document.getElementById('trivia-box');
     
+    // ודא שהאלמנטים קיימים לפני ניסיון לגשת אליהם
+    if (!triviaBtn || !triviaBox) return;
+
     triviaBtn.onclick = function() {
         if (triviaQuestions.length === 0) {
             triviaBox.innerHTML = '<p>אין שאלות זמינות כרגע. מתחבר לגיליון...</p>';
@@ -425,7 +466,7 @@ window.checkTrivia = function(qIdx, ansIdx) {
 document.addEventListener('DOMContentLoaded', function() {
     // אתחול מערכות
     SyncStatus.init();
-    initTrivia();
+    initTrivia(); // עדכון: כעת קורא ל-initTrivia עם בדיקת קיום אלמנטים
     
     // טעינה ראשונית
     GoogleSheetsSync.loadParticipants();
@@ -564,6 +605,12 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         map.invalidateSize();
     }, 500);
+
+    // לוגיקה לכפתור "איפוס מפה" חדש
+    document.getElementById('reset-map-btn').addEventListener('click', () => {
+        map.setView([31.5, 34.75], 8); // חזרה למיקום ולזום ההתחלתיים
+        ToastManager.show('תצוגת המפה אופסה! 🌍');
+    });
 });
 
 // ניקוי בסגירת האפליקציה
