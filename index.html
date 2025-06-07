@@ -126,12 +126,33 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // הגדרות Firebase: כעת אנו משתמשים במשתנה הגלובלי __firebase_config המסופק על ידי סביבת הקנבס.
-        // זה מבטיח שההגדרות תמיד יהיו מדויקות עבור הפרויקט שבו אתה עובד בקנבס.
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // *** הגדרות Firebase: זהו החלק הקריטי ביותר! ***
+        // *** אתה חייב להעתיק ולהדביק כאן את כל אובייקט ה-firebaseConfig המדויק מפרויקט Firebase שלך. ***
+        // *** פעולה זו תפתור את שגיאת "auth/api-key-not-valid" / "auth/configuration-not-found" ***
+
+        // שלבים להשגת הערכים המדויקים מפרויקט Firebase שלך:
+        // 1. עבור ל-Firebase Console: https://console.firebase.google.com/
+        // 2. ודא שאתה בפרויקט הנכון שלך (שם הפרויקט שלך אמור להיות "Maya Delegation to Uganda").
+        // 3. בתפריט הצדדי, נווט אל "Project settings" (גלגל שיניים, ליד "Project overview").
+        // 4. בלשונית "General" (כללי), גלול מטה למקטע "Your apps" (האפליקציות שלך).
+        // 5. לחץ על האפליקציה שלך (היא תהיה עם אייקון של ווב).
+        // 6. תחת "Firebase SDK snippet", בחר באפשרות **"Config"**.
+        // 7. העתק את *כל* הקוד שמופיע בתוך תיבת הטקסט הזו. הוא יתחיל ב-`const firebaseConfig = { ... };`
+        //    (או `var firebaseConfig = { ... };`).
+        // 8. **הדבק את הקוד הזה כאן, והחלף את כל האובייקט הקיים של `firebaseConfig` למטה.**
+        //    (אל תשאיר שום "YOUR_..."ים או הערות שהשארתי בתוך האובייקט).
+        //    ודא שיש לך רק `const firebaseConfig = { ... };` אחד בלבד בקוד.
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCQc9P30rQmjoR9rsAPF1XrTiBwCF9_Cg", // הדבק כאן את ה-apiKey המדויק שלך מפרויקט Firebase!
+            authDomain: "maya-delegation-to-uganda.firebaseapp.com",
+            projectId: "maya-delegation-to-uganda",
+            storageBucket: "maya-delegation-to-uganda.appspot.com",
+            messagingSenderId: "543677265577",
+            appId: "1:543677265577:web:2d9f122e2b545dff6b"
+        }; // אובייקט זה יוחלף בערכים האמיתיים שלך מה-Firebase Console.
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -164,7 +185,7 @@
                     console.log("User authenticated:", userId);
                     await initMapAndLogic(); 
                 } else {
-                    // Sign in anonymously if no custom token is provided
+                    // ניסיון להתחבר אנונימית
                     try {
                         // אם יש אסימון אימות מותאם אישית (לדוגמה מהקנבס) נשתמש בו, אחרת ננסה כניסה אנונימית.
                         if (typeof __initial_auth_token !== 'undefined') {
@@ -192,14 +213,17 @@
              if (error.code === 'auth/identity-toolkit-api-has-not-been-used-in-project' || error.code === 'auth/api-key-not-valid' || error.code === 'auth/configuration-not-found') {
                  errorMessage = `
                      <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאת אימות Firebase</h1>
-                     <p style="font-size: 1rem;">**זה קריטי:** נא לוודא שכל הגדרות ה-Firebase (apiKey, authDomain וכו') **נכונות ומדויקות** בפרויקט שלך ב-Firebase Console.</p>
+                     <p style="font-size: 1rem;">**זו השגיאה העקשנית ביותר. התיקון הוא רק בהגדרות החיצוניות של הפרויקט שלך בגוגל!**</p>
+                     <p style="font-size: 0.8rem;">נא לוודא שכל הגדרות ה-Firebase (apiKey, authDomain וכו') **נכונות ומדויקות** בפרויקט שלך ב-Firebase Console.</p>
                      <p style="font-size: 0.8rem;">**צעדים לתיקון:**</p>
                      <ol style="font-size: 0.8rem; text-align: right; margin-right: 20px;">
                         <li>עבור ל-Firebase Console: <a href="https://console.firebase.google.com/" target="_blank" style="color: #6750A4;">https://console.firebase.google.com/</a></li>
-                        <li>ודא שאתה בפרויקט שלך ("Maya Delegation to Uganda").</li>
+                        <li>ודא שאתה בפרויקט הנכון שלך ("Maya Delegation to Uganda").</li>
                         <li>נווט אל "Project settings" (גלגל השיניים) -> "General" -> "Your apps".</li>
                         <li>לחץ על האפליקציה שלך (אייקון ווב).</li>
-                        <li>**ודא שכל ההגדרות תחת "Firebase SDK snippet" בתצורת "Config" תואמות לפרויקט שלך.**</li>
+                        <li>תחת "Firebase SDK snippet", בחר באפשרות **"Config"**.</li>
+                        <li>**העתק את *כל* אובייקט ה-<code>firebaseConfig</code> משם.**</li>
+                        <li>**הדבק אותו בקוד האפליקציה שלך** (בקנבס או בקובץ index.html אם אתה עובד מקומית), **והחלף את כל האובייקט הקיים של <code>firebaseConfig</code>.**</li>
                         <li>וודא ש-'Identity Toolkit API' מופעל ב-Google Cloud Console: <a href="https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=${firebaseConfig.projectId}" target="_blank" style="color: #6750A4;">הפעל Identity Toolkit API</a></li>
                      </ol>
                  `;
@@ -211,7 +235,7 @@
                         <p style="font-size: 0.8rem;">אנא הוסף את הכתובת הבאה (או את דומיין הבסיס שלה עם כוכבית) להגבלות ה-HTTP referrers בחשבון Google Cloud, עבור מפתח ה-API שלך:</p>
                         <p style="font-size: 0.9rem; font-weight: bold; color: #333;"><code>${currentUrl.split('/').slice(0, 3).join('/')}/*</code></p>
                         <p style="font-size: 0.8rem;">עבור אל <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud (אישורי כניסה)</a> ועדכן את ההגבלות עבור מפתח ה-API שלך.</p>
-                    `;
+                    </div>`;
              }
              else {
                  errorMessage = `
@@ -226,15 +250,14 @@
             try {
                 // נתיב הקולקציה: 2KN3ETIuP6hAgdpdGjV0/participants
                 // זהו הנתיב המדויק שבו הנתונים נמצאים כרגע, לפי צילום המסך האחרון של המשתמש.
-                const collectionPath = `2KN3ETIuP6hAgdpdGjV0/participants`; 
-                console.log("Attempting to load data from Firestore path:", collectionPath);
+                const documentId = "2KN3ETIuP6hAgdpdGjV0"; // מזהה המסמך השורשי המכיל את הקולקציה 'participants'
+                const subCollectionName = "participants"; // שם קולקציית המשנה
+                
+                // יצירת הפנייה לקולקציית המשנה בתוך המסמך
+                const q = collection(db, documentId, subCollectionName); 
+                console.log("Attempting to load data from Firestore path:", `${documentId}/${subCollectionName}`);
 
-                // כללי אבטחה ב-Firestore חייבים לאפשר:
-                // match /2KN3ETIuP6hAgdpdGjV0/participants/{document} {
-                //   allow read: if request.auth != null;
-                // }
 
-                const q = collection(db, collectionPath);
                 const querySnapshot = await getDocs(q);
                 participants = [];
                 querySnapshot.forEach((doc) => {
@@ -253,9 +276,10 @@
                 applyFilters();
             } catch (error) {
                 console.error("Firestore Error:", error);
+                // עדכון הודעת השגיאה ב-UI כדי לכלול את הנתיב המדויק
                 elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
                     <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה בטעינת נתוני הקבוצה</h1>
-                    <p style="font-size: 1rem;">נא לוודא שיש חיבור אינטרנט, שהרשאות הגישה ל-Firestore מוגדרות כראוי (במיוחד עבור הנתיב: '${collectionPath}'), ושהנתונים קיימים ומוגדרים נכון (Lat/Lon כמספרים).</p>
+                    <p style="font-size: 1rem;">נא לוודא שיש חיבור אינטרנט, שהרשאות הגישה ל-Firestore מוגדרות כראוי (במיוחד עבור הנתיב: '2KN3ETIuP6hAgdpdGjV0/participants'), ושהנתונים קיימים ומוגדרים נכון (Lat/Lon כמספרים).</p>
                     <p style="font-size: 0.8rem;">(ראה קונסולת מפתחים לפרטים נוספים)</p>
                 </div>`;
             }
@@ -286,7 +310,8 @@
                         };
                     });
                     console.log("Google Maps script loaded successfully.");
-                } catch (error) {
+                }
+                catch (error) { // Catch block for script loading error
                     console.error("Error during Google Maps script loading:", error);
                     elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
                         <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה בטעינת ספריית המפות</h1>
@@ -325,15 +350,15 @@
                     elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
                         <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה באתחול המפה</h1>
                         <p style="font-size: 1rem;">נא לוודא שמפתח ה-API של Google Maps תקין ומוגדר כראוי עבור דומיין זה.</p>
-                        <p style="font-size: 0.8rem;">אנא בדוק את <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud</a> עבור הגבלות מפתח API.</p>
+                        <p style="font-size: 0.8rem;">אנא בדוק את <a href="https://console.cloud.google.com/apis/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud</a> עבור הגבלות מפתח API.</p>
                     </div>`;
                 }
-                return; 
+                return;
             }
 
             elements.searchInput.addEventListener('input', applyFilters);
             elements.cityFilter.addEventListener('change', applyFilters);
-            
+
             await loadDataFromFirestore();
         }
 
@@ -341,32 +366,32 @@
             const searchTerm = elements.searchInput.value.trim().toLowerCase();
             const selectedCity = elements.cityFilter.value;
             let filtered = participants;
-            
+
             if (selectedCity) {
                 filtered = filtered.filter(p => p.city === selectedCity);
             }
             if (searchTerm) {
                 filtered = filtered.filter(p => p.name && p.name.toLowerCase().includes(searchTerm));
             }
-            
+
             renderMarkers(filtered);
         }
-        
+
         function populateCityFilter() {
             const cities = [...new Set(participants.map(user => user.city || "לא צוין"))].sort((a,b) => a.localeCompare(b, 'he'));
             elements.cityFilter.innerHTML = '<option value="">כל הערים</option>';
             cities.forEach(city => {
                 if (city) {
-                    elements.cityFilter.innerHTML += `<option value="${city}">${city.charAt(0).toUpperCase() + city.slice(1)}</option>`; 
+                    elements.cityFilter.innerHTML += `<option value="${city}">${city.charAt(0).toUpperCase() + city.slice(1)}</option>`;
                 }
             });
         }
-        
-        let currentMarkers = []; 
+
+        let currentMarkers = [];
         function renderMarkers(list) {
             currentMarkers.forEach(marker => marker.setMap(null));
             currentMarkers = [];
-            
+
             list.forEach(p => {
                 if (p.lat && p.lon && !isNaN(p.lat) && !isNaN(p.lon)) {
                     const marker = new google.maps.Marker({ position: { lat: p.lat, lng: p.lon }, map: map });
@@ -383,40 +408,8 @@
             });
             elements.participantCount.textContent = `${list.length} משתתפים`;
         }
-        
+
         checkAccess();
     </script>
 </body>
 </html>
-```
----
-
-**מה עליך לעשות עכשיו (השלב הקריטי ביותר)**:
-
-1.  **העתק את הקוד המלא מהקנבס:**
-    * בצד ימין של המסך, בקנבס, ודא שהקוד העדכני של האפליקציה פתוח.
-    * העתק את **כל הקוד** מתחילת הקובץ (`<!DOCTYPE html>`) ועד סופו (`</html>`).
-
-2.  **הדבק את הקוד החדש לקובץ ה-HTML המקומי שלך:**
-    * פתח את קובץ ה-`index.html` של הפרויקט שלך במחשב (זה שאתה פורס ל-GitHub Pages) בעורך קוד (כמו VS Code).
-    * **מחק את *כל* התוכן הקיים** בקובץ ה-`index.html`.
-    * **הדבק את הקוד החדש** שהעתקת מהקנבס במקומו.
-    * **שמור את הקובץ!**
-
-3.  **פרוס את השינויים ל-GitHub Pages:**
-    * עליך לדחוף את השינויים החדשים (עם הקוד שמשתמש ב-`__firebase_config` שזה המפתח שהקנבס מספק, והוא המפתח הנכון) לריפוזיטוריון ה-GitHub שלך.
-    * אם אתה משתמש בגיט דרך הטרמינל/שורת הפקודה:
-        ```bash
-        git add .
-        git commit -m "Use __firebase_config for dynamic API key loading"
-        git push origin main  # או master, תלוי בשם הענף הראשי שלך
-        ```
-    * אם אתה משתמש בתוכנת ממשק משתמש של גיט, בצע Commit ו-Push של השינויים.
-
-4.  **בצע ריענון קשיח (Hard Refresh) לדף האפליקציה ב-GitHub Pages:**
-    * לאחר מספר דקות (לפעמים לוקח ל-GitHub Pages קצת זמן לעדכן - עד 5-10 דקות), עבור לדף האפליקציה שלך: `https://itaytay39.github.io/Maya-Delegation-to-Uganda1/`
-    * בצע **ריענון קשיח** של הדף:
-        * **ב-Windows:** לחץ `Ctrl + F5`
-        * **ב-Mac:** לחץ `Cmd + Shift + R`
-
-**אני מצפה שבפעם הזו, האפליקציה תצליח להתחבר ל-Firebase ולטעון את המפה עם המשתתפים.** זהו הפתרון הכי ודאי לבעיות התצורה של Firebase. אם זה יעבוד, נוכל לעבור לשינויים של כניסת אדמ
