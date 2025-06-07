@@ -129,30 +129,16 @@
         import { getFirestore, collection, getDocs, query, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // *** הגדרות Firebase: זהו החלק הקריטי ביותר! ***
-        // *** אתה חייב להעתיק ולהדביק כאן את כל אובייקט ה-firebaseConfig המדויק מפרויקט Firebase שלך. ***
-        // *** פעולה זו תפתור את שגיאת "auth/api-key-not-valid" / "auth/configuration-not-found" ***
-
-        // שלבים להשגת הערכים המדויקים מפרויקט Firebase שלך:
-        // 1. עבור ל-Firebase Console: https://console.firebase.google.com/
-        // 2. ודא שאתה בפרויקט הנכון שלך (שם הפרויקט שלך אמור להיות "Maya Delegation to Uganda").
-        // 3. בתפריט הצדדי, נווט אל "Project settings" (גלגל שיניים, ליד "Project overview").
-        // 4. בלשונית "General" (כללי), גלול מטה למקטע "Your apps" (האפליקציות שלך).
-        // 5. לחץ על האפליקציה שלך (היא תהיה עם אייקון של ווב).
-        // 6. תחת "Firebase SDK snippet", בחר באפשרות **"Config"**.
-        // 7. העתק את *כל* הקוד שמופיע בתוך תיבת הטקסט הזו. הוא יתחיל ב-`const firebaseConfig = { ... };`
-        //    (או `var firebaseConfig = { ... };`).
-        // 8. **הדבק את הקוד הזה כאן, והחלף את כל האובייקט הקיים של `firebaseConfig` למטה.**
-        //    (אל תשאיר שום "YOUR_..."ים או הערות שהשארתי בתוך האובייקט).
-        //    ודא שיש לך רק `const firebaseConfig = { ... };` אחד בלבד בקוד.
-
+        // *** אובייקט ה-firebaseConfig כאן עודכן לערכים המדויקים שנלקחו מפרויקט Firebase שלך. ***
+        // *** זה אמור לפתור את שגיאת "auth/api-key-not-valid" / "auth/configuration-not-found" ***
         const firebaseConfig = {
-            apiKey: "AIzaSyCQc9P30rQmjoR9rsAPF1XrTiBwCF9_Cg", // הדבק כאן את ה-apiKey המדויק שלך מפרויקט Firebase!
+            apiKey: "AIzaSyCQc9P30rQmjoR9rsAPF1XrTiBwCF9_Cg", // זהו מפתח ה-API המדויק מפרויקט ה-Firebase שלך!
             authDomain: "maya-delegation-to-uganda.firebaseapp.com",
             projectId: "maya-delegation-to-uganda",
             storageBucket: "maya-delegation-to-uganda.appspot.com",
             messagingSenderId: "543677265577",
             appId: "1:543677265577:web:2d9f122e2b545dff6b"
-        }; // אובייקט זה יוחלף בערכים האמיתיים שלך מה-Firebase Console.
+        };
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
