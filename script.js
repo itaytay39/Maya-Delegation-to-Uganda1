@@ -5,9 +5,10 @@ console.log("🚀 מתחיל אתחול אפליקציית מאיה מחוברת
 const SHEET_CONFIG = {
     spreadsheetId: '1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg',
     participantsUrl: 'https://docs.google.com/spreadsheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv',
-    triviaUrl: 'https://docs.google.com/spreadsheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv&sheet=טריוויה',
+    triviaUrl: 'https://docs.google.com/sheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv&sheet=טריוויה',
     syncInterval: 14400000, // סנכרון כל 4 שעות (14.4 מיליון מילישניות = 4 שעות)
-    appsScriptUrl: 'https://script.google.com/macros/s/AKfycbz1DrYpMY8F7awe-BuveOR_i8iwSiAHF7dRTgbh1j91beIyRy9GcIHcjhEeK3VIdlj31Q/exec' // ה-URL החדש שקיבלת
+    appsScriptUrl: 'https://script.google.com/macros/s/AKfycbz1DrYpMY8F7awe-BuveOR_i8iwSiAHF7dRTgbh1j91beIyRy9GcIHcjhEeK3VIdlj31Q/exec', // ה-URL החדש שקיבלת
+    SECRET_KEY: "your_secret_admin_key_here" // <-- חשוב: שנה את זה למפתח סודי משלך!
 };
 
 // משתנים גלובליים
@@ -64,13 +65,15 @@ const GoogleSheetsSync = {
     async loadParticipants() {
         const prevParticipantsLength = participants.length; // שמירת אורך הרשימה לפני הטעינה
         try {
-            console.log("📡 טוען נתונים מגוגל שיטס...");
+            console.log("� טוען נתונים מגוגל שיטס...");
             SyncStatus.update("טוען נתונים...");
             
             const response = await fetch(SHEET_CONFIG.participantsUrl);
             if (!response.ok) throw new Error('Network response was not ok');
             
             const csvText = await response.text();
+            console.log("CSV Raw Text (first 200 chars):", csvText.substring(0, 200)); // הדפס קטע מה-CSV הגולמי
+            
             const rows = this.parseCSV(csvText);
             
             if (rows.length === 0) {
@@ -78,8 +81,10 @@ const GoogleSheetsSync = {
             }
             
             const headers = rows[0];
+            console.log("Parsed Headers (from CSV):", headers); // הדפס את הכותרות שזוהו
+            
             const newParticipants = rows.slice(1) // טוען את המשתתפים החדשים למשתנה זמני
-                .filter(row => row[0] && row[0].trim()) 
+                .filter(row => row[0] && row[0].trim()) // סינון שורות ריקות לחלוטין
                 .map(row => {
                     const obj = {};
                     headers.forEach((h, i) => {
@@ -90,7 +95,7 @@ const GoogleSheetsSync = {
                         firstName: obj['שם פרטי'] || '',
                         lastName: obj['שם משפחה'] || '',
                         name: (obj['שם פרטי'] || '') + ' ' + (obj['שם משפחה'] || ''),
-                        city: obj['עיר'] || '',
+                        city: obj['עיר'] || '', // ודא ששם העמודה כאן תואם בדיוק לגיליון
                         lat: parseFloat(obj['Lat']) || null,
                         lon: parseFloat(obj['Lon']) || null,
                         phone: this.formatPhone(obj['מספר טלפון'] || ''),
@@ -101,6 +106,9 @@ const GoogleSheetsSync = {
             
             // עדכון המשתנה הגלובלי רק לאחר עיבוד מוצלח
             participants = newParticipants; 
+            
+            // הדפס את הערים של כמה משתתפים לדוגמה כדי לוודא שנקראו נכון
+            console.log("Sample Participant Cities (after parsing):", participants.slice(0, 5).map(p => p.city));
 
             console.log(`✅ נטענו ${participants.length} משתתפים מהגיליון`);
             SyncStatus.update(`נטענו ${participants.length} משתתפים`);
@@ -397,10 +405,14 @@ window.deleteUser = function(idx) {
     }
     
     const user = participants[idx];
+    // במקום confirm(), נשתמש במודל מותאם אישית אם תרצה, אך כרגע זה בסדר לצרכי אבטחה קלה
     if (confirm(`האם אתה בטוח שברצונך למחוק את ${user.name}?`)) {
         console.log(`🗑️ מוחק משתמש: ${user.name}`);
 
-        const deletePayload = { id: user.name }; // או ID ייחודי אחר
+        const deletePayload = { 
+            id: user.name, // או ID ייחודי אחר
+            secretKey: SHEET_CONFIG.SECRET_KEY // הוספת מפתח סודי
+        }; 
         
         // שליחת בקשת מחיקה ל-Apps Script
         fetch(SHEET_CONFIG.appsScriptUrl, {
@@ -548,6 +560,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // כפתור סנכרון ידני
     document.getElementById('sync-btn').addEventListener('click', () => {
         if (!admin) return;
+        // איפוס דגל הטעינה הראשונה כדי שהודעת הסנכרון תופיע תמיד בלחיצה ידנית
+        isFirstSyncLoad = true; 
         GoogleSheetsSync.loadParticipants();
         GoogleSheetsSync.loadTrivia();
     });
@@ -600,6 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // או ב-Apps Script.
             'Lat': (editIdx !== null) ? participants[editIdx].lat : null, // שמירה על קואורדינטות קיימות בעריכה
             'Lon': (editIdx !== null) ? participants[editIdx].lon : null,
+            secretKey: SHEET_CONFIG.SECRET_KEY // הוספת מפתח סודי
         };
 
         // קבע את הפעולה
@@ -630,6 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ToastManager.show(`${fullName} ${action === 'add' ? 'נוסף' : 'עודכן'} בהצלחה!`);
                 // לאחר שמירה מוצלחת, טען מחדש את הנתונים מהגיליון
                 // כדי שהמפה תתעדכן עם הנתונים העדכניים (כולל Lat/Lon אם הם נטענים מחדש)
+                isFirstSyncLoad = true; // איפוס דגל הטעינה הראשונה כדי שהודעת הסנכרון תופיע לאחר שינוי
                 await GoogleSheetsSync.loadParticipants(); 
             } else {
                 ToastManager.show(`שגיאה בשמירה: ${result.message}`, 'error');
@@ -660,7 +676,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // פונקציה לעדכון תיבת הבחירה של הערים
     function populateCityFilter() {
-        const cities = [...new Set(participants.map(p => p.city).filter(c => c))]; // ערים ייחודיות, רק כאלה עם ערך
+        // חשוב: אם תיבה זו מציגה רק "כל הערים", ייתכן שהעמודה "עיר" בגיליון ריקה/שגויה עבור כל המשתתפים.
+        // הקוד הזה מחלץ ערים ייחודיות לא ריקות.
+        const cities = [...new Set(participants.map(p => p.city).filter(c => c && c.trim() !== ''))]; 
         cities.sort(); // מיון אלפביתי
         cityFilterSelect.innerHTML = '<option value="">כל הערים</option>'; // אפשרות ברירת מחדל
         cities.forEach(city => {
@@ -670,6 +688,12 @@ document.addEventListener('DOMContentLoaded', function() {
             cityFilterSelect.appendChild(option);
         });
         cityFilterSelect.value = currentFilters.city; // שמירה על הבחירה הנוכחית
+        
+        // הוספת קונסול לוג כדי שתוכל לראות אילו ערים נטענו
+        console.log("ערים שנטענו לפילטר:", cities); 
+        if (cities.length === 0) {
+            console.warn("אין ערים חוקיות בעמודת 'עיר' בגיליון Google Sheets. וודא שהנתונים קיימים.");
+        }
     }
 
     // פונקציה לסינון המשתתפים (משלבת חיפוש ופילטרים)
@@ -779,3 +803,4 @@ window.addEventListener('beforeunload', () => {
 });
 
 console.log("✅ אפליקציית מאיה מחוברת לגוגל שיטס מוכנה לשימוש!");
+�
