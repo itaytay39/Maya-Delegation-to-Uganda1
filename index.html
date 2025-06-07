@@ -12,390 +12,639 @@
 
     <style>
         :root {
+            /* Material Design 3 Color Palette */
             --md-sys-primary: #6750A4;
             --md-sys-on-primary: #FFFFFF;
+            --md-sys-primary-container: #EADDFF;
+            --md-sys-on-primary-container: #21005D;
+            --md-sys-secondary: #625B71;
+            --md-sys-on-secondary: #FFFFFF;
+            --md-sys-secondary-container: #E8DEF8;
+            --md-sys-on-secondary-container: #1D192B;
+            --md-sys-tertiary: #7D5260;
+            --md-sys-on-tertiary: #FFFFFF;
+            --md-sys-tertiary-container: #FFD8E4;
+            --md-sys-on-tertiary-container: #31111D;
+            --md-sys-error: #B3261E;
+            --md-sys-on-error: #FFFFFF;
+            --md-sys-background: #FEF7FF;
+            --md-sys-on-background: #1D1B20;
             --md-sys-surface: #FEF7FF;
             --md-sys-on-surface: #1D1B20;
             --md-sys-surface-variant: #E7E0EC;
             --md-sys-on-surface-variant: #49454F;
-            --md-sys-shape-xl: 28px;
+            --md-sys-outline: #79747E;
+            --md-sys-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+
+            /* Material Design 3 Shape */
+            --md-sys-shape-corner-small: 8px;
+            --md-sys-shape-corner-medium: 12px;
+            --md-sys-shape-corner-large: 16px;
+            --md-sys-shape-corner-xl: 28px;
         }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; overflow: hidden; font-family: 'Heebo', sans-serif; }
-        body { background: var(--md-sys-background); color: var(--md-sys-on-background); direction: rtl; }
         
-        #app-container, #access-denied-container {
-            max-width: 600px; margin: 0 auto; background: var(--md-sys-surface);
-            height: 100%; display: flex; flex-direction: column;
+        body {
+            background: var(--md-sys-background);
+            color: var(--md-sys-on-background);
+            direction: rtl;
         }
 
-        /* --- מסך דחיית גישה --- */
-        #access-denied-container {
-            align-items: center; justify-content: center; text-align: center;
-            padding: 2rem; display: none; /* נשאר מוסתר כי הסרנו את הצורך באסימון גישה */
-        }
-        .access-denied-icon { font-size: 4rem; color: var(--md-sys-primary); margin-bottom: 1.5rem; }
-        .access-denied-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .access-denied-text { font-size: 1.1rem; color: var(--md-sys-on-surface-variant); line-height: 1.6; }
-        
-        /* --- אפליקציה ראשית (מוסתרת בהתחלה) --- */
-        #app-container { display: none; }
-        #app-container.visible { display: flex; }
-
-        /* --- עיצוב כותרת מעודכן --- */
-        .header {
-            /* שונה לגרדיאנט בהיר יותר, בסגנון גוגל */
-            background: linear-gradient(135deg, #e0e7ff 0%, #c3daff 100%); /* גרדיאנט כחול/סגול בהיר */
-            padding: 1.5rem 1rem; /* הגדלת ריווח פנימי */
+        #app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--md-sys-surface);
+            height: 100%;
             display: flex;
-            flex-direction: column; /* סידור לוגו, כותרת, סלוגן אחד מתחת לשני */
-            align-items: center; /* יישור פריטים למרכז אופקית */
-            justify-content: center; /* יישור פריטים למרכז אנכית במידת הצורך */
-            color: #49454F; /* צבע טקסט כהה יותר לקונטרסט על רקע בהיר */
-            border-bottom: none; /* הוסר גבול תחתון */
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: var(--md-sys-surface);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid var(--md-sys-surface-variant);
             flex-shrink: 0;
-            text-align: center; /* ודא שהטקסט ממורכז */
         }
         .logo-maya {
-            width: 90px; /* הגדלת גודל הלוגו */
-            height: 90px; /* הגדלת גודל הלוגו */
-            border-radius: 50%;
-            margin-bottom: 0.75rem; /* ריווח בין הלוגו לכותרת */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* הוספת צל עדין */
-            background-color: white; /* ודא רקע לבן ללוגו */
-            padding: 5px; /* ריווח פנימי קטן סביב התמונה בתוך העיגול */
-            object-fit: contain; /* ודא שהתמונה מתאימה בתוך העיגול */
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--md-sys-primary-container);
+            padding: 4px;
         }
-        .header-title {
-            font-size: 1.75rem; /* גודל כותרת גדול יותר */
-            font-weight: 700; /* כותרת מודגשת יותר */
-            margin-bottom: 0.25rem; /* ריווח בין הכותרת לסלוגן */
-            color: var(--md-sys-on-surface); /* ודא קונטרסט טוב */
+        .logo-maya img { width: 100%; height: 100%; border-radius: 50%; }
+        .header-title { font-size: 1.25rem; font-weight: 600; color: var(--md-sys-on-surface); }
+        .header-controls { margin-right: auto; display: flex; gap: 0.5rem; }
+        .icon-button {
+            background: none; border: none; padding: 8px;
+            border-radius: 50%; cursor: pointer; display: flex;
+            color: var(--md-sys-on-surface-variant);
+            transition: background-color 0.2s;
         }
-        .header-slogan {
-            font-size: 1rem; /* גודל גופן סלוגן */
-            font-weight: 400; /* משקל רגיל */
-            color: var(--md-sys-on-surface-variant); /* התאמת צבע סלוגן לקונטרסט */
+        .icon-button:hover { background: rgba(0,0,0,0.05); }
+
+        /* Filters */
+        .filters-container {
+            padding: 0.5rem 1rem 1rem;
+            background: var(--md-sys-surface);
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+        .input-container {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: var(--md-sys-surface-variant);
+            border-radius: var(--md-sys-shape-corner-xl);
+            padding: 0.5rem 1rem;
+        }
+        .input-container .material-symbols-outlined { color: var(--md-sys-on-surface-variant); }
+        .search-input, #city-filter {
+            width: 100%; border: none; outline: none;
+            font-size: 1rem; background: transparent; appearance: none;
+            color: var(--md-sys-on-surface-variant);
+        }
+        #city-filter { cursor: pointer; }
+
+        /* Map */
+        .map-container { flex-grow: 1; position: relative; }
+        #map { height: 100%; width: 100%; background: #f0f0f0; }
+        .participant-count {
+            position: absolute; top: 1rem; right: 1rem;
+            background: rgba(255,255,255,0.9); padding: 0.5rem 1rem;
+            border-radius: var(--md-sys-shape-corner-medium); z-index: 1;
+            font-size: 0.875rem; font-weight: 500;
         }
 
-        .filters-container { padding: 0.5rem 1rem 1rem; background: var(--md-sys-surface); display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; flex-shrink: 0; }
-        .input-container .material-symbols-outlined { color: var(--md-sys-on-surface-variant); }
-        .search-input, #city-filter { width: 100%; border: none; outline: none; font-size: 1rem; background: transparent; appearance: none; color: var(--md-sys-on-surface-variant); }
-        .map-container { flex-grow: 1; position: relative; }
-        #map { height: 100%; width: 100%; background: #f0f0f0; display: flex; align-items: center; justify-content: center;} /* הוספת מאפייני פלקס למיקום הודעת שגיאה במרכז */
-        .participant-count { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.9); padding: 0.5rem 1rem; border-radius: 12px; z-index: 1; font-size: 0.875rem; }
-        .gm-style-iw-d { overflow: hidden !important; } .gm-style-iw-c { padding: 0 !important; border-radius: 16px !important; }
+        /* FAB */
+        .fab-container {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 1.5rem;
+            z-index: 1000;
+        }
+        #add-user-fab {
+            width: 56px; height: 56px;
+            background: var(--md-sys-primary-container);
+            color: var(--md-sys-on-primary-container);
+            border-radius: var(--md-sys-shape-corner-large);
+            border: none;
+            box-shadow: var(--md-sys-shadow);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #add-user-fab:hover { box-shadow: 0 2px 4px 1px rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15); }
+        #add-user-fab:active { transform: scale(0.95); }
+
+        /* Bottom Sheet (Modal replacement) */
+        .bottom-sheet-scrim {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+            z-index: 1999; opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .bottom-sheet {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--md-sys-surface);
+            border-top-left-radius: var(--md-sys-shape-corner-xl);
+            border-top-right-radius: var(--md-sys-shape-corner-xl);
+            padding: 1.5rem;
+            padding-top: 1rem;
+            z-index: 2000;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .bottom-sheet.visible { transform: translateY(0); }
+        .bottom-sheet-scrim.visible { opacity: 1; pointer-events: auto; }
+        .bottom-sheet-handle {
+            width: 32px; height: 4px;
+            background: var(--md-sys-outline);
+            border-radius: 2px;
+            margin: 0 auto 1rem;
+        }
+        .bottom-sheet h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--md-sys-on-surface);
+        }
+
+        /* Material 3 Form Elements */
+        .form-group { margin-bottom: 1rem; }
+        .form-input {
+            width: 100%; padding: 1rem;
+            background: var(--md-sys-surface-variant);
+            border-radius: var(--md-sys-shape-corner-small);
+            border: 1px solid var(--md-sys-outline);
+            font-size: 1rem;
+            color: var(--md-sys-on-surface);
+            outline: none;
+        }
+        .form-input:focus { border-color: var(--md-sys-primary); }
+        .button-group { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn {
+            flex: 1; padding: 0.75rem 1rem; border: none;
+            border-radius: var(--md-sys-shape-corner-xl);
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+        .btn-filled { background: var(--md-sys-primary); color: var(--md-sys-on-primary); }
+        .btn-outlined { background: transparent; color: var(--md-sys-primary); border: 1px solid var(--md-sys-outline); }
+
+        /* InfoWindow & Toast */
+        .gm-style-iw-d { overflow: hidden !important; }
+        .gm-style-iw-c { padding: 0 !important; border-radius: 16px !important; }
         .popup-box { padding: 1rem; text-align: center; max-width: 280px; }
-        .popup-name { font-size: 1.25rem; font-weight: 700; color: var(--md-sys-primary); margin-bottom: 0.25rem; }
+        .popup-name { font-size: 1.25rem; font-weight: 700; color: var(--md-sys-primary); margin-bottom: 0.25rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
         .popup-city { font-size: 1rem; color: var(--md-sys-on-surface-variant); margin-bottom: 1rem; }
-        .user-id-display {
-            font-size: 0.75rem;
-            color: var(--md-sys-on-surface-variant);
-            margin-top: 1rem;
-            text-align: center;
+        .popup-phone { font-size: 0.9rem; color: #555; margin-bottom: 0.5rem;} /* Added phone display */
+        .popup-btns { display: flex; flex-direction: column; gap: 0.5rem; }
+        .popup-btn { padding: 0.6rem; border-radius: var(--md-sys-shape-corner-xl); font-size: 0.875rem; font-weight: 600; }
+        #toast-container { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 3000; }
+        .toast {
+            background: #333; color: white; padding: 0.75rem 1.25rem;
+            border-radius: var(--md-sys-shape-corner-medium); box-shadow: var(--md-sys-shadow);
         }
     </style>
 </head>
 <body>
-    <div id="access-denied-container">
-        <span class="material-symbols-outlined access-denied-icon">lock</span>
-        <h1 class="access-denied-title">הגישה נחסמה</h1>
-        <p class="access-denied-text">נראה שאתה מנסה להיכנס ללא קישור ההזמנה.<br>כדי לראות את המפה, אנא השתמש בקישור שנשלח בקבוצת הוואטסאפ של המשלחת.</p>
-    </div>
-
     <div id="app-container">
+        <!-- Header -->
         <header class="header">
-            <!-- לוגו מאיה - מותאם למראה החדש -->
-            <img class="logo-maya" src="https://itaytay39.github.io/Maya-Delegation-to-Uganda1/logo.jpg" alt="לוגו מאיה" onerror="this.style.display='none'">
-            <!-- כותרת ראשית -->
-            <h1 class="header-title">מאיה - משלחת לאוגנדה</h1>
-            <!-- סלוגן - נוסף בהתאם לבקשתך -->
-            <p class="header-slogan">מחברים בין חברים</p>
+            <div class="logo-maya"><img src="https://itaytay39.github.io/Maya-Delegation-to-Uganda1/logo.jpg" alt="לוגו מאיה" onerror="this.style.display='none'"></div>
+            <h1 class="header-title">מפת המשלחת</h1>
+            <div class="header-controls">
+                <button id="sync-btn" class="icon-button"><span class="material-symbols-outlined">sync</span></button>
+                <button id="admin-login-btn" class="icon-button"><span class="material-symbols-outlined">admin_panel_settings</span></button>
+                <button id="admin-logout-btn" class="icon-button" style="display:none;"><span class="material-symbols-outlined">logout</span></button>
+            </div>
         </header>
+
+        <!-- Filters -->
         <div class="filters-container">
-            <div class="input-container"><span class="material-symbols-outlined">location_city</span><select id="city-filter"><option value="">כל הערים</option></select></div>
-            <div class="input-container"><span class="material-symbols-outlined">search</span><input type="search" id="search-input" placeholder="חיפוש..." class="search-input"></div>
+            <div class="input-container">
+                <span class="material-symbols-outlined">location_city</span>
+                <select id="city-filter"><option value="">כל הערים</option></select>
+            </div>
+            <div class="input-container">
+                <span class="material-symbols-outlined">search</span>
+                <input type="search" id="search-input" placeholder="חיפוש..." class="search-input">
+            </div>
         </div>
+
+        <!-- Map -->
         <main class="map-container">
             <div id="map"></div>
-            <div id="participant-count" class="participant-count"></div>
+            <div id="participant-count" class="participant-count">טוען...</div>
+            <div class="fab-container">
+                <button id="add-user-fab" style="display:none;"><span class="material-symbols-outlined">add</span></button>
+            </div>
         </main>
-        <div id="user-id-display" class="user-id-display"></div>
+    </div>
+
+    <!-- Bottom Sheets (Modals) -->
+    <div id="admin-login-scrim" class="bottom-sheet-scrim"></div>
+    <div id="admin-login-sheet" class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <h3>כניסת מנהל</h3>
+        <div class="form-group"><input type="password" id="admin-password" class="form-input" placeholder="הכנס סיסמה"></div>
+        <div class="button-group">
+            <button id="admin-cancel" class="btn btn-outlined">ביטול</button>
+            <button id="admin-login" class="btn btn-filled">כניסה</button>
+        </div>
+    </div>
+
+    <div id="user-form-scrim" class="bottom-sheet-scrim"></div>
+    <div id="user-form-sheet" class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <h3 id="user-form-title">הוספת משתתף</h3>
+        <div class="form-group"><input id="user-first-name" class="form-input" placeholder="שם פרטי"></div>
+        <div class="form-group"><input id="user-last-name" class="form-input" placeholder="שם משפחה"></div>
+        <div class="form-group"><input id="user-city" class="form-input" placeholder="עיר"></div>
+        <div class="form-group"><input id="user-phone" class="form-input" placeholder="טלפון"></div>
+        <div class="form-group"><input id="user-whatsapp" class="form-input" placeholder="WhatsApp (אופציונלי)"></div>
+        <div class="button-group">
+            <button id="user-cancel" class="btn btn-outlined">ביטול</button>
+            <button id="user-save" class="btn btn-filled">שמירה</button>
+        </div>
     </div>
     
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs, query, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    <div id="toast-container"></div>
 
-        // *** הגדרות Firebase: זהו החלק הקריטי ביותר! ***
-        // *** אובייקט ה-firebaseConfig כאן עודכן לערכים המדויקים שנלקחו מצילומי המסך האחרונים שלך מפרויקט Firebase שלך. ***
-        // *** זה אמור לפתור את שגיאת "auth/api-key-not-valid" / "auth/configuration-not-found" ***
-        const firebaseConfig = {
-            apiKey: "AIzaSyD9Otp32sofmjDfI3aP31XskTxRuCF9_Cg", // זהו מפתח ה-API המדויק שלך מפרויקט ה-Firebase!
-            authDomain: "maya-delegation-to-uganda.firebaseapp.com",
-            projectId: "maya-delegation-to-uganda",
-            storageBucket: "maya-delegation-to-uganda.firebasestorage.app",
-            messagingSenderId: "543677265577",
-            appId: "1:543677265577:web:7c8f122ed21f6c5aaadbb8"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+    
+    <script>
+    let map; 
 
-        let map;
-        let infoWindow;
+    // `initMap` is called by the Google Maps script automatically.
+    function initMap() {
+        const mapStyles = [
+            { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+            { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
+            { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] },
+            { featureType: "administrative.neighborhood", stylers: [{ visibility: "off" }] },
+            { featureType: "poi", elementType: "geometry", stylers: [{ color: "#eeeeee" }] },
+            { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+            { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#e5e5e5" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+            { featureType: "road.arterial", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+            { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#dadada" }] },
+            { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+            { featureType: "transit.line", elementType: "geometry", stylers: [{ color: "#e5e5e5" }] },
+            { featureType: "transit.station", elementType: "geometry", stylers: [{ color: "#eeeeee" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9c9c9" }] },
+            { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] }
+        ];
+
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: 0.3476, lng: 32.5825 }, // Centered on Kampala, Uganda, as in previous version
+            zoom: 7, // Zoom level adjusted to show more of Uganda
+            mapId: 'DEMO_MAP_ID', // Using DEMO_MAP_ID as provided in the user's template
+            disableDefaultUI: true,
+            zoomControl: true,
+            styles: mapStyles
+        });
+        document.dispatchEvent(new Event('mapReady'));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const SHEET_CONFIG = { participantsUrl: 'https://docs.google.com/spreadsheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv', syncInterval: 60000 };
+        const ADMIN_PASSWORD = "1234";
         let participants = [];
-        let userId = 'טוען...'; 
-        let googleMapsScriptLoaded = false; // Flag to prevent multiple script loads
+        let syncTimer = null;
+        let isAdmin = false;
+        let editIdx = null;
+        let markerClusterer = null;
 
         const elements = {
-            appContainer: document.getElementById('app-container'),
-            accessDeniedContainer: document.getElementById('access-denied-container'),
-            searchInput: document.getElementById('search-input'), 
-            cityFilter: document.getElementById('city-filter'),
+            searchInput: document.getElementById('search-input'), cityFilter: document.getElementById('city-filter'),
             participantCount: document.getElementById('participant-count'),
-            mapDiv: document.getElementById('map'),
-            userIdDisplay: document.getElementById('user-id-display'), 
+            syncBtn: document.getElementById('sync-btn'),
+            adminLoginBtn: document.getElementById('admin-login-btn'), adminLogoutBtn: document.getElementById('admin-logout-btn'),
+            addUserFab: document.getElementById('add-user-fab'),
+            // Bottom Sheets
+            adminLoginSheet: { scrim: document.getElementById('admin-login-scrim'), sheet: document.getElementById('admin-login-sheet'), cancel: document.getElementById('admin-cancel'), submit: document.getElementById('admin-login'), password: document.getElementById('admin-password') },
+            userFormSheet: { scrim: document.getElementById('user-form-scrim'), sheet: document.getElementById('user-form-sheet'), cancel: document.getElementById('user-cancel'), submit: document.getElementById('user-save'), title: document.getElementById('user-form-title'), firstName: document.getElementById('user-first-name'), lastName: document.getElementById('user-last-name'), city: document.getElementById('user-city'), phone: document.getElementById('user-phone'), whatsapp: document.getElementById('user-whatsapp') },
         };
 
-        // פונקציה לבדיקת גישה - שונתה כדי לאפשר גישה מיידית
-        function checkAccess() {
-            elements.appContainer.classList.add('visible');
-            
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid; 
-                    elements.userIdDisplay.textContent = `מזהה משתמש: ${userId}`;
-                    console.log("User authenticated:", userId);
-                    await initMapAndLogic(); 
-                } else {
-                    // ניסיון להתחבר אנונימית
-                    try {
-                        // אם יש אסימון אימות מותאם אישית (לדוגמה מהקנבס) נשתמש בו, אחרת ננסה כניסה אנונימית.
-                        if (typeof __initial_auth_token !== 'undefined') {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                        userId = auth.currentUser?.uid || crypto.randomUUID(); 
-                        elements.userIdDisplay.textContent = `מזהה משתמש אורח: ${userId}`;
-                        console.log("Signed in. Map is accessible.");
-                        await initMapAndLogic();
-                    } catch (error) {
-                        handleAuthError(error);
-                    }
+        const ToastManager = {
+            show(message) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                container.appendChild(toast);
+                setTimeout(() => { container.removeChild(toast); }, 3000);
+            }
+        };
+
+        const BottomSheetManager = {
+            toggle(sheetElements, show) {
+                sheetElements.scrim.classList.toggle('visible', show);
+                sheetElements.sheet.classList.toggle('visible', show);
+            }
+        };
+
+        const GoogleSheetsSync = {
+            async loadData(isManual = false) {
+                if(elements.syncBtn.querySelector('.material-symbols-outlined')) {
+                    elements.syncBtn.querySelector('.material-symbols-outlined').style.animation = 'spin 1s linear infinite';
                 }
-            });
+                try {
+                    const response = await fetch(`${SHEET_CONFIG.participantsUrl}&t=${new Date().getTime()}`);
+                    if (!response.ok) throw new Error(`Network response was not ok`);
+                    const csvText = await response.text();
+                    const rows = this.parseCSV(csvText);
+                    if (rows.length < 2) throw new Error('No data in sheet'); // Check for at least headers + one row
+                    const headers = rows[0];
+                    participants = rows.slice(1).map(row => {
+                        const obj = {}; headers.forEach((h, i) => obj[h] = row[i] || '');
+                        // Parse Lat/Lon, ensuring they are numbers. Handle potential empty strings or invalid numbers.
+                        const lat = parseFloat(obj['Lat']);
+                        const lon = parseFloat(obj['Lon']);
+                        return { 
+                            name: `${obj['שם פרטי'] || ''} ${obj['שם משפחה'] || ''}`.trim(), 
+                            firstName: obj['שם פרטי'] || '', 
+                            lastName: obj['שם משפחה'] || '', 
+                            city: obj['עיר'] || 'לא צוין', 
+                            lat: isNaN(lat) ? null : lat, // Set to null if not a valid number
+                            lon: isNaN(lon) ? null : lon, // Set to null if not a valid number
+                            phone: this.formatPhone(obj['מספר טלפון']), 
+                            whatsapp: this.formatPhone(obj['מספר ווצאפ'] || obj['מספר WhatsApp'])
+                        };
+                    }).filter(p => p.name && p.lat !== null && p.lon !== null); // Filter out entries with invalid lat/lon
+
+                    if (isManual) ToastManager.show(`סונכרנו ${participants.length} משתתפים`);
+                    this.updateUI();
+                } catch (error) {
+                    console.error("Data load error:", error);
+                    if (isManual) ToastManager.show('שגיאה בטעינת נתונים');
+                } finally {
+                     if(elements.syncBtn.querySelector('.material-symbols-outlined')) {
+                         elements.syncBtn.querySelector('.material-symbols-outlined').style.animation = '';
+                     }
+                }
+            },
+            parseCSV(csvText) {
+                const lines = csvText.split(/\r\n|\n/);
+                return lines.map(line => {
+                    const result = []; let current = ''; let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i]; const nextChar = line[i+1];
+                        // Handle escaped quotes ""
+                        if (char === '"' && inQuotes && nextChar === '"') { current += '"'; i++; } 
+                        else if (char === '"') { inQuotes = !inQuotes; } 
+                        else if (char === ',' && !inQuotes) { result.push(current.trim().replace(/^"|"$/g, '')); current = ''; } 
+                        else { current += char; }
+                    }
+                    result.push(current.trim().replace(/^"|"$/g, ''));
+                    return result;
+                });
+            },
+            formatPhone(phone) { 
+                if (!phone) return ''; 
+                // Remove all non-digit characters
+                const cleaned = phone.replace(/\D/g, ''); 
+                // If it starts with 0, keep it. Otherwise, assume Israeli prefix +972
+                if (cleaned.startsWith('0')) {
+                    return cleaned;
+                } else if (cleaned.startsWith('972')) {
+                    return '0' + cleaned.substring(3); // Remove 972 and add 0
+                }
+                return '0' + cleaned.slice(-9); // Fallback: last 9 digits with 0 prefix
+            },
+            updateUI() { populateCityFilter(); applyFilters(); },
+            startAutoSync() { this.stopAutoSync(); syncTimer = setInterval(() => this.loadData(false), SHEET_CONFIG.syncInterval); },
+            stopAutoSync() { if (syncTimer) clearInterval(syncTimer); }
+        };
+        
+        function getDistanceInKm(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of Earth in kilometers
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function setAdminMode(isAdminMode) {
+            isAdmin = isAdminMode;
+            elements.adminLoginBtn.style.display = isAdmin ? 'none' : 'flex';
+            elements.adminLogoutBtn.style.display = isAdmin ? 'flex' : 'none';
+            elements.addUserFab.style.display = isAdmin ? 'flex' : 'none';
+            applyFilters(); // Re-render markers with admin buttons if applicable
         }
         
-        function handleAuthError(error) {
-             console.error("Authentication failed:", error);
-             console.warn("שגיאה באימות Firebase. נתוני המפה עשויים לא להיטען עקב הרשאות.");
-             
-             let errorMessage = '';
-             // הודעות שגיאה מפורטות למשתמש
-             if (error.code === 'auth/identity-toolkit-api-has-not-been-used-in-project' || error.code === 'auth/api-key-not-valid' || error.code === 'auth/configuration-not-found') {
-                 errorMessage = `
-                     <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאת אימות Firebase</h1>
-                     <p style="font-size: 1rem;">**זו השגיאה העקשנית ביותר. התיקון הוא רק בהגדרות החיצוניות של הפרויקט שלך בגוגל!**</p>
-                     <p style="font-size: 0.8rem;">נא לוודא שכל הגדרות ה-Firebase (apiKey, authDomain וכו') **נכונות ומדויקות** בפרויקט שלך ב-Firebase Console.</p>
-                     <p style="font-size: 0.8rem;">**צעדים לתיקון:**</p>
-                     <ol style="font-size: 0.8rem; text-align: right; margin-right: 20px;">
-                        <li>עבור ל-Firebase Console: <a href="https://console.firebase.google.com/" target="_blank" style="color: #6750A4;">https://console.firebase.google.com/</a></li>
-                        <li>ודא שאתה בפרויקט הנכון שלך ("Maya Delegation to Uganda").</li>
-                        <li>נווט אל "Project settings" (גלגל השיניים) -> "General" -> "Your apps".</li>
-                        <li>לחץ על האפליקציה שלך (אייקון ווב).</li>
-                        <li>תחת "Firebase SDK snippet", בחר באפשרות **"Config"**.</li>
-                        <li>**העתק את *כל* אובייקט ה-<code>firebaseConfig</code> משם.**</li>
-                        <li>**הדבק אותו בקוד האפליקציה שלך** (בקנבס או בקובץ index.html אם אתה עובד מקומית), **והחלף את כל האובייקט הקיים של <code>firebaseConfig</code>.**</li>
-                        <li>וודא ש-'Identity Toolkit API' מופעל ב-Google Cloud Console: <a href="https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=${firebaseConfig.projectId}" target="_blank" style="color: #6750A4;">הפעל Identity Toolkit API</a></li>
-                     </ol>
-                 `;
-             } else if (error.code === 'auth/requests-from-referer-blocked') {
-                  const currentUrl = window.location.href.split('?')[0]; 
-                  errorMessage = `
-                        <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה: בקשות Firebase נחסמו</h1>
-                        <p style="font-size: 1rem;">נראה שהכתובת הנוכחית של האתר אינה מורשית עבור Firebase Authentication.</p>
-                        <p style="font-size: 0.8rem;">אנא הוסף את הכתובת הבאה (או את דומיין הבסיס שלה עם כוכבית) להגבלות ה-HTTP referrers בחשבון Google Cloud, עבור מפתח ה-API שלך:</p>
-                        <p style="font-size: 0.9rem; font-weight: bold; color: #333;"><code>${currentUrl.split('/').slice(0, 3).join('/')}/*</code></p>
-                        <p style="font-size: 0.8rem;">עבור אל <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud (אישורי כניסה)</a> ועדכן את ההגבלות עבור מפתח ה-API שלך.</p>
-                    </div>`;
-             }
-             else {
-                 errorMessage = `
-                    <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה באימות</h1>
-                    <p style="font-size: 1rem;">שגיאת אימות ב-Firebase. בדוק את הגדרות הפרויקט והרשאות. (קוד שגיאה: ${error.code})</p>
-                `;
-             }
-             elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">${errorMessage}</div>`;
-        }
-
-        async function loadDataFromFirestore() {
-            try {
-                // נתיב הקולקציה: 2KN3ETIuP6hAgdpdGjV0/participants
-                // זהו הנתיב המדויק שבו הנתונים נמצאים כרגע, לפי צילום המסך האחרון של המשתמש.
-                const documentId = "2KN3ETIuP6hAgdpdGjV0"; // מזהה המסמך השורשי המכיל את הקולקציה 'participants'
-                const subCollectionName = "participants"; // שם קולקציית המשנה
-                
-                // יצירת הפנייה לקולקציית המשנה בתוך המסמך
-                const q = collection(db, documentId, subCollectionName); 
-                console.log("Attempting to load data from Firestore path:", `${documentId}/${subCollectionName}`);
-
-
-                const querySnapshot = await getDocs(q);
-                participants = [];
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    data.lat = parseFloat(data.Lat);
-                    data.lon = parseFloat(data.Lon);
-                    if (!isNaN(data.lat) && !isNaN(data.lon)) {
-                         participants.push(data);
-                    } else {
-                        console.warn("Participant data missing valid Lat/Lon or not a number:", data);
-                    }
+        const infoWindow = new google.maps.InfoWindow();
+        
+        const pinIcon = {
+            path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z", // Material pin icon
+            fillColor: 'var(--md-sys-primary)',
+            fillOpacity: 1,
+            strokeWeight: 0,
+            scale: 1.5,
+            anchor: new google.maps.Point(12, 24), // Anchor to the bottom-center of the pin
+        };
+        
+        const clusterRenderer = {
+            render: ({ count, position }) => {
+                const color = count > 10 ? 'var(--md-sys-secondary)' : 'var(--md-sys-primary)';
+                // SVG for cluster marker with count
+                const svg = window.btoa(`<svg fill="${color}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240"><circle cx="120" cy="120" r="100" fill="white" /><circle cx="120" cy="120" r="90" fill="${color}" /><text x="50%" y="50%" style="fill: white; font-family: Heebo, sans-serif; font-size: 90px; font-weight: 700;" dominant-baseline="central" text-anchor="middle">${count}</text></svg>`);
+                return new google.maps.Marker({ 
+                    position, 
+                    icon: { 
+                        url: `data:image/svg+xml;base64,${svg}`, 
+                        scaledSize: new google.maps.Size(48, 48), 
+                    }, 
                 });
-                participants.sort((a, b) => (a.name || "").localeCompare(b.name || "", 'he'));
+            },
+        };
 
-                populateCityFilter();
-                applyFilters();
-            } catch (error) {
-                console.error("Firestore Error:", error);
-                // עדכון הודעת השגיאה ב-UI כדי לכלול את הנתיב המדויק
-                elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
-                    <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה בטעינת נתוני הקבוצה</h1>
-                    <p style="font-size: 1rem;">נא לוודא שיש חיבור אינטרנט, שהרשאות הגישה ל-Firestore מוגדרות כראוי (במיוחד עבור הנתיב: '2KN3ETIuP6hAgdpdGjV0/participants'), ושהנתונים קיימים ומוגדרים נכון (Lat/Lon כמספרים).</p>
-                    <p style="font-size: 0.8rem;">(ראה קונסולת מפתחים לפרטים נוספים)</p>
-                </div>`;
-            }
-        }
-
-        async function initMapAndLogic() {
-            if (!googleMapsScriptLoaded) {
-                console.warn("Google Maps API is not loaded yet. Attempting to load dynamically...");
-                const script = document.createElement('script');
-                script.src = `https://maps.googleapis.com/maps/api/js?key=${firebaseConfig.apiKey}&libraries=maps`; 
-                script.async = true;
-                script.defer = true;
-                document.head.appendChild(script);
-
-                try {
-                    await new Promise((resolve, reject) => {
-                        script.onload = () => {
-                            if (typeof google !== 'undefined' && typeof google.maps !== 'undefined' && typeof google.maps.importLibrary === 'function') {
-                                googleMapsScriptLoaded = true; 
-                                resolve();
-                            } else {
-                                reject(new Error("Google Maps script loaded, but importLibrary is not available."));
-                            }
-                        };
-                        script.onerror = () => {
-                            console.error("Failed to load Google Maps script. This often means the API key is invalid or not enabled for Google Maps JavaScript API.");
-                            reject(new Error("Failed to load Google Maps script."));
-                        };
-                    });
-                    console.log("Google Maps script loaded successfully.");
-                }
-                catch (error) { // Catch block for script loading error
-                    console.error("Error during Google Maps script loading:", error);
-                    elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
-                        <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה בטעינת ספריית המפות</h1>
-                        <p style="font-size: 1rem;">ייתכן שמפתח ה-API של Google Maps אינו תקין או שאינו מוגדר כראוי בחשבון Google Cloud.</p>
-                        <p style="font-size: 0.8rem;">אנא בדוק את <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud</a> עבור הגבלות מפתח API (HTTP referrers) ואפשר את "Maps JavaScript API".</p>
-                    </div>`;
-                    return; 
-                }
-            } else {
-                console.log("Google Maps API already loaded (skipped dynamic load).");
-            }
-            
-            try {
-                const { Map, InfoWindow } = await google.maps.importLibrary("maps");
-                infoWindow = new InfoWindow();
-                
-                map = new Map(elements.mapDiv, {
-                    center: { lat: 31.5, lng: 34.75 }, 
-                    zoom: 8, 
-                    disableDefaultUI: true, 
-                    zoomControl: true 
-                });
-                console.log("Google Map initialized.");
-            } catch (error) {
-                console.error("Error initializing Google Map. This might be due to API key restrictions or other configuration issues:", error);
-                if (error.code === 'RefererNotAllowedMapError') {
-                    const currentUrl = window.location.href.split('?')[0]; 
-                    elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
-                        <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה: דומיין לא מורשה למפות Google</h1>
-                        <p style="font-size: 1rem;">נראה שהכתובת הנוכחית של האתר אינה מורשית עבור מפתח ה-API של מפות Google שלך.</p>
-                        <p style="font-size: 0.8rem;">אנא הוסף את הכתובת הבאה (או את דומיין הבסיס שלה עם כוכבית) להגבלות ה-HTTP referrers בחשבון Google Cloud:</p>
-                        <p style="font-size: 0.9rem; font-weight: bold; color: #333;"><code>${currentUrl.split('/').slice(0, 3).join('/')}/*</code></p>
-                        <p style="font-size: 0.8rem;">עבור אל <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud (אישורי כניסה)</a> ועדכן את ההגבלות עבור מפתח ה-API שלך.</p>
-                    </div>`;
-                } else {
-                    elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
-                        <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה באתחול המפה</h1>
-                        <p style="font-size: 1rem;">נא לוודא שמפתח ה-API של Google Maps תקין ומוגדר כראוי עבור דומיין זה.</p>
-                        <p style="font-size: 0.8rem;">אנא בדוק את <a href="https://console.cloud.google.com/apis/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud</a> עבור הגבלות מפתח API.</p>
-                    </div>`;
-                }
-                return;
-            }
-
-            elements.searchInput.addEventListener('input', applyFilters);
-            elements.cityFilter.addEventListener('change', applyFilters);
-
-            await loadDataFromFirestore();
-        }
-
-        function applyFilters() {
-            const searchTerm = elements.searchInput.value.trim().toLowerCase();
-            const selectedCity = elements.cityFilter.value;
-            let filtered = participants;
-
-            if (selectedCity) {
-                filtered = filtered.filter(p => p.city === selectedCity);
-            }
-            if (searchTerm) {
-                filtered = filtered.filter(p => p.name && p.name.toLowerCase().includes(searchTerm));
-            }
-
-            renderMarkers(filtered);
-        }
-
-        function populateCityFilter() {
-            const cities = [...new Set(participants.map(user => user.city || "לא צוין"))].sort((a,b) => a.localeCompare(b, 'he'));
-            elements.cityFilter.innerHTML = '<option value="">כל הערים</option>';
-            cities.forEach(city => {
-                if (city) {
-                    elements.cityFilter.innerHTML += `<option value="${city}">${city.charAt(0).toUpperCase() + city.slice(1)}</option>`;
-                }
-            });
-        }
-
-        let currentMarkers = [];
         function renderMarkers(list) {
-            currentMarkers.forEach(marker => marker.setMap(null));
-            currentMarkers = [];
-
+            if(markerClusterer) markerClusterer.clearMarkers(); // Clear existing clusters
+            const currentMarkers = [];
+            // Create a marker for each participant in the filtered list
             list.forEach(p => {
-                if (p.lat && p.lon && !isNaN(p.lat) && !isNaN(p.lon)) {
-                    const marker = new google.maps.Marker({ position: { lat: p.lat, lng: p.lon }, map: map });
+                // Ensure lat/lon are valid numbers before creating a marker
+                if (p.lat !== null && p.lon !== null) {
+                    const marker = new google.maps.Marker({ position: { lat: p.lat, lng: p.lon }, icon: pinIcon });
                     marker.addListener('click', () => {
-                        const content = `<div class="popup-box"><div class="popup-name">${p.name}</div><div class="popup-city">${p.city}</div></div>`;
+                        const nearbyUsers = participants.filter(other => 
+                            p !== other && // Exclude self
+                            p.lat !== null && p.lon !== null && // Ensure valid coordinates for calculation
+                            other.lat !== null && other.lon !== null &&
+                            getDistanceInKm(p.lat, p.lon, other.lat, other.lon) <= 15
+                        );
+                        let carpoolButtonHTML = '';
+                        if (nearbyUsers.length > 0) {
+                            // Gather names of current user and nearby users for carpool message
+                            const allNames = [p, ...nearbyUsers].map(user => user.firstName || user.name.split(' ')[0]).join(', ');
+                            const encodedMessage = encodeURIComponent(`היי, מתארגנים על טרמפ למשלחת מהאזור שלנו! 😊\nהנה מי שקרוב: ${allNames}.\nמי רוצה להצטרף?`);
+                            carpoolButtonHTML = `<a href="https://api.whatsapp.com/send?text=${encodedMessage}" target="_blank" class="popup-btn carpool"><span class="material-symbols-outlined">directions_car</span>תיאום נסיעה</a>`;
+                        }
+                        const whatsappNum = (p.whatsapp && p.whatsapp.length > 9) ? p.whatsapp : p.phone;
+                        const adminButtons = isAdmin ? 
+                            `<button class="popup-btn edit" data-index="${participants.indexOf(p)}"><span class="material-symbols-outlined">edit</span>ערוך</button>
+                             <button class="popup-btn delete" data-index="${participants.indexOf(p)}"><span class="material-symbols-outlined">delete</span>מחק</button>` 
+                             : '';
+                        
+                        const content = `<div class="popup-box">
+                                            <div class="popup-name"><span class="material-symbols-outlined">person</span>${p.name}</div>
+                                            <div class="popup-city">${p.city}</div>
+                                            <div class="popup-phone">📞 ${p.phone}</div>
+                                            <div class="popup-btns">
+                                                <a href="tel:${p.phone}" class="popup-btn phone" target="_blank"><span class="material-symbols-outlined">call</span>צור קשר</a>
+                                                <a href="https://wa.me/972${whatsappNum.replace(/^0/, '')}" class="popup-btn whatsapp" target="_blank"><span class="material-symbols-outlined">chat</span>וואטסאפ</a>
+                                                ${adminButtons}
+                                                ${carpoolButtonHTML}
+                                            </div>
+                                        </div>`;
                         infoWindow.setContent(content);
-                        infoWindow.open({
-                            anchor: marker,
-                            map,
-                        });
+                        infoWindow.open(map, marker);
                     });
                     currentMarkers.push(marker);
+                } else {
+                    console.warn(`Participant ${p.name} has invalid coordinates and will not be displayed on the map. Lat: ${p.lat}, Lon: ${p.lon}`);
                 }
             });
+            // Initialize MarkerClusterer with the new markers
+            markerClusterer = new markerclusterer.MarkerClusterer({ map, markers: currentMarkers, renderer: clusterRenderer });
             elements.participantCount.textContent = `${list.length} משתתפים`;
         }
 
-        checkAccess();
+        function populateCityFilter() { 
+            const cities = [...new Set(participants.map(user => user.city))].sort((a,b) => a.localeCompare(b, 'he')); 
+            const currentCity = elements.cityFilter.value; 
+            elements.cityFilter.innerHTML = '<option value="">כל הערים</option>'; 
+            cities.forEach(city => elements.cityFilter.innerHTML += `<option value="${city}">${city}</option>`); 
+            elements.cityFilter.value = cities.includes(currentCity) ? currentCity : ""; 
+        }
+
+        function applyFilters() { 
+            const searchTerm = elements.searchInput.value.trim().toLowerCase(); 
+            const selectedCity = elements.cityFilter.value; 
+            let filtered = participants; 
+            if (selectedCity) filtered = filtered.filter(p => p.city === selectedCity); 
+            if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm) || p.phone.includes(searchTerm)); 
+            renderMarkers(filtered); 
+        }
+
+        function handleAdminLogin() { 
+            if (elements.adminLoginSheet.password.value === ADMIN_PASSWORD) { 
+                setAdminMode(true); 
+                BottomSheetManager.toggle(elements.adminLoginSheet, false); 
+                elements.adminLoginSheet.password.value = ''; 
+                ToastManager.show('התחברת כמנהל בהצלחה!'); 
+            } else { 
+                ToastManager.show('סיסמה שגויה!'); 
+            } 
+        }
+
+        function openUserForm(index = null) {
+            const { sheet, title, firstName, lastName, city, phone, whatsapp } = elements.userFormSheet;
+            editIdx = index;
+            if (index !== null) {
+                const p = participants[index];
+                title.textContent = 'ערוך משתתף';
+                firstName.value = p.firstName; lastName.value = p.lastName;
+                city.value = p.city; phone.value = p.phone; whatsapp.value = p.whatsapp;
+            } else {
+                title.textContent = 'הוסף משתתף';
+                [firstName, lastName, city, phone, whatsapp].forEach(el => el.value = '');
+            }
+            BottomSheetManager.toggle(elements.userFormSheet, true);
+        }
+
+        function handleUserFormSave() {
+            const { sheet, firstName, lastName, city, phone, whatsapp } = elements.userFormSheet;
+            // Default coordinates for new users (e.g., Kampala) if location is not determined
+            // You might want to implement a geocoding API here to get actual coordinates from the city name.
+            const defaultLat = 0.3476; // Kampala latitude
+            const defaultLon = 32.5825; // Kampala longitude
+
+            const newUser = {
+                firstName: firstName.value.trim(),
+                lastName: lastName.value.trim(),
+                name: `${firstName.value.trim()} ${lastName.value.trim()}`.trim(),
+                city: city.value.trim(),
+                phone: GoogleSheetsSync.formatPhone(phone.value.trim()), // Ensure phone is formatted
+                whatsapp: GoogleSheetsSync.formatPhone(whatsapp.value.trim()), // Ensure whatsapp is formatted
+                // If editing, keep existing lat/lon. If new, use default.
+                lat: editIdx !== null && participants[editIdx] ? participants[editIdx].lat : defaultLat,
+                lon: editIdx !== null && participants[editIdx] ? participants[editIdx].lon : defaultLon,
+            };
+            if (!newUser.name || !newUser.city || !newUser.phone) {
+                ToastManager.show('יש למלא שם, עיר וטלפון');
+                return; // Prevent saving if required fields are missing
+            }
+            if (editIdx !== null) { 
+                participants[editIdx] = newUser; 
+                ToastManager.show('משתמש עודכן'); 
+            } else { 
+                participants.push(newUser); 
+                ToastManager.show('משתמש נוסף'); 
+            }
+            BottomSheetManager.toggle(elements.userFormSheet, false);
+            GoogleSheetsSync.updateUI(); // Re-render markers and update filters
+        }
+        
+        document.addEventListener('mapReady', () => {
+            elements.searchInput.addEventListener('input', applyFilters);
+            elements.cityFilter.addEventListener('change', applyFilters);
+            elements.syncBtn.addEventListener('click', () => GoogleSheetsSync.loadData(true));
+            elements.adminLoginBtn.addEventListener('click', () => BottomSheetManager.toggle(elements.adminLoginSheet, true));
+            elements.adminLogoutBtn.addEventListener('click', () => { setAdminMode(false); ToastManager.show('התנתקת מהניהול'); });
+            elements.adminLoginSheet.submit.addEventListener('click', handleAdminLogin);
+            elements.adminLoginSheet.cancel.addEventListener('click', () => BottomSheetManager.toggle(elements.adminLoginSheet, false));
+            elements.addUserFab.addEventListener('click', () => openUserForm(null));
+            elements.userFormSheet.submit.addEventListener('click', handleUserFormSave);
+            elements.userFormSheet.cancel.addEventListener('click', () => BottomSheetManager.toggle(elements.userFormSheet, false));
+            elements.adminLoginSheet.scrim.addEventListener('click', () => BottomSheetManager.toggle(elements.adminLoginSheet, false));
+            elements.userFormSheet.scrim.addEventListener('click', () => BottomSheetManager.toggle(elements.userFormSheet, false));
+            
+            document.body.addEventListener('click', (e) => {
+                // Ensure clicks within the bottom sheet or toast don't trigger outside listeners
+                if (e.target.closest('.bottom-sheet') || e.target.closest('.toast')) {
+                    return;
+                }
+
+                if (e.target.matches('.popup-btn[data-index]')) {
+                    const target = e.target;
+                    const index = parseInt(target.dataset.index, 10);
+                    if (isNaN(index)) return;
+                    infoWindow.close(); // Close info window before opening form or deleting
+
+                    if (target.classList.contains('edit')) {
+                        openUserForm(index);
+                    } else if (target.classList.contains('delete')) {
+                        // For a real application, you'd need a server-side script (e.g., Google Apps Script)
+                        // to modify the Google Sheet. This client-side code cannot directly delete rows.
+                        // Here, we simulate deletion from the local `participants` array for demonstration.
+                        ToastManager.show(`פעולת מחיקה מבוצעת מקומית. כדי למחוק לצמיתות, נדרש שילוב צד-שרת עם גליון Google.`);
+                        participants.splice(index, 1);
+                        GoogleSheetsSync.updateUI(); // Re-render markers and update filters
+                        ToastManager.show('משתמש נמחק (מקומי)');
+                    }
+                }
+            });
+            GoogleSheetsSync.loadData(true); // Initial load of data
+            GoogleSheetsSync.startAutoSync(); // Start periodic syncing
+        });
+    });
     </script>
+    
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrnqOiCt-0DizYiXxb73BDGDDLUn1Zdds&callback=initMap"></script>
 </body>
 </html>
