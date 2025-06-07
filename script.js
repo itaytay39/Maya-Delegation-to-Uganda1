@@ -6,7 +6,7 @@ const SHEET_CONFIG = {
     spreadsheetId: '1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg',
     participantsUrl: 'https://docs.google.com/spreadsheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv',
     triviaUrl: 'https://docs.google.com/spreadsheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv&sheet=טריוויה',
-    syncInterval: 30000, // סנכרון כל 30 שניות
+    syncInterval: 14400000, // סנכרון כל 4 שעות (14.4 מיליון מילישניות = 4 שעות)
     appsScriptUrl: 'https://script.google.com/macros/s/AKfycbz1DrYpMY8F7awe-BuveOR_i8iwSiAHF7dRTgbh1j91beIyRy9GcIHcjhEeK3VIdlj31Q/exec' // ה-URL החדש שקיבלת
 };
 
@@ -17,6 +17,7 @@ let admin = false;
 const adminPassword = "1234";
 let editIdx = null;
 let syncTimer = null;
+let isFirstSyncLoad = true; // דגל כדי לדעת אם זו הטעינה הראשונה
 
 // מערכת הודעות מתקדמת
 const ToastManager = {
@@ -61,6 +62,7 @@ const SyncStatus = {
 // מערכת טעינת נתונים מגוגל שיטס
 const GoogleSheetsSync = {
     async loadParticipants() {
+        const prevParticipantsLength = participants.length; // שמירת אורך הרשימה לפני הטעינה
         try {
             console.log("📡 טוען נתונים מגוגל שיטס...");
             SyncStatus.update("טוען נתונים...");
@@ -76,8 +78,8 @@ const GoogleSheetsSync = {
             }
             
             const headers = rows[0];
-            participants = rows.slice(1)
-                .filter(row => row[0] && row[0].trim()) // סינון שורות ריקות
+            const newParticipants = rows.slice(1) // טוען את המשתתפים החדשים למשתנה זמני
+                .filter(row => row[0] && row[0].trim()) 
                 .map(row => {
                     const obj = {};
                     headers.forEach((h, i) => {
@@ -95,11 +97,21 @@ const GoogleSheetsSync = {
                         whatsapp: this.formatPhone(obj['מספר ווצאפ'] || obj['מספר WhatsApp'] || '')
                     };
                 })
-                .filter(p => p.lat && p.lon && !isNaN(p.lat) && !isNaN(p.lon)); // סינון נתונים לא תקינים
+                .filter(p => p.lat && p.lon && !isNaN(p.lat) && !isNaN(p.lon)); 
             
+            // עדכון המשתנה הגלובלי רק לאחר עיבוד מוצלח
+            participants = newParticipants; 
+
             console.log(`✅ נטענו ${participants.length} משתתפים מהגיליון`);
             SyncStatus.update(`נטענו ${participants.length} משתתפים`);
-            ToastManager.show(`נטענו ${participants.length} משתתפים מהגיליון`);
+            
+            // הצגת הודעה רק אם זו הטעינה הראשונה או אם מספר המשתתפים השתנה
+            if (isFirstSyncLoad || participants.length !== prevParticipantsLength) {
+                ToastManager.show(`נטענו ${participants.length} משתתפים מהגיליון`);
+                isFirstSyncLoad = false; // לאחר הטעינה הראשונה, נכבה את הדגל
+            } else {
+                console.log("אין שינוי במספר המשתתפים, לא מציג הודעה.");
+            }
             
             this.updateUI(); // קריאה ל-updateUI לאחר טעינת המשתתפים
             
@@ -107,6 +119,7 @@ const GoogleSheetsSync = {
             console.error("❌ שגיאה בטעינת נתונים:", error);
             SyncStatus.update("שגיאה בטעינת נתונים", true);
             ToastManager.show('שגיאה בטעינת נתונים מהגיליון', 'error');
+            isFirstSyncLoad = false; // במקרה של שגיאה, גם נכבה את הדגל
         }
     },
     
@@ -287,7 +300,7 @@ function renderMarkers(list = participants) {
         const whatsappNum = (p.whatsapp && p.whatsapp.length > 0) ? p.whatsapp : p.phone;
         const hasWhatsapp = whatsappNum && whatsappNum.length >= 9;
         
-        // לוגיקה לזיהוי משתמשים קרובים 
+        // לוגיקה לזיהוי משתתפים קרובים 
         let nearby = null;
         // חשוב: לוגיקת "קרוב" ב-renderMarkers כרגע סורקת את *כל* ה-participants, לא רק המסוננים.
         // אם תרצה שהיא תפעל רק על מה שמוצג, תצטרך לשנות את הלוגיקה כאן
