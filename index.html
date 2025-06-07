@@ -753,175 +753,12 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- Firebase SDKs - Removed for now, will be re-added carefully -->
+    <script>
+        // 🚀 מערכת ניהול נתונים מתקדמת - מאיה משלחת לאוגנדה 2025
+        console.log("🚀 מתחיל אתחול אפליקציית מאיה מתקדמת...");
 
-        // Global variables for Firebase and App ID, provided by Canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let db;
-        let auth;
-        let currentUserId; 
-        let firebaseAuthReady = false; 
-        
-        // Define FirebaseManager and its operations
-        const FirebaseManager = {
-            async initializeFirebase() {
-                try {
-                    // Check if projectId is provided
-                    if (!firebaseConfig.projectId) {
-                        console.error("Firebase: projectId not provided in firebaseConfig.");
-                        ToastManager.show('שגיאת אתחול Firebase: projectId חסר. אנא הגדר את Firebase.', 'error');
-                        // Fallback to local storage if Firebase initialization fails
-                        if (StorageManager.load()) {
-                            ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
-                        } else {
-                            console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם Firebase וגם אחסון מקומי נכשלו)");
-                            ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
-                        }
-                        populateCityFilter();
-                        renderMarkers();
-                        updateParticipantCount();
-                        return; // Exit if projectId is missing
-                    }
-
-                    const app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-
-                    onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            currentUserId = user.uid;
-                            console.log('Firebase user signed in:', currentUserId);
-                            firebaseAuthReady = true;
-                            this.listenForParticipants();
-                        } else {
-                            try {
-                                if (initialAuthToken) {
-                                    await signInWithCustomToken(auth, initialAuthToken);
-                                    currentUserId = auth.currentUser?.uid;
-                                    console.log('Signed in with custom token:', currentUserId);
-                                } else {
-                                    const anonUser = await signInAnonymously(auth);
-                                    currentUserId = anonUser.user.uid;
-                                    console.log('Signed in anonymously:', currentUserId);
-                                }
-                                firebaseAuthReady = true;
-                                this.listenForParticipants();
-                            } catch (error) {
-                                console.error("Error during Firebase authentication:", error);
-                                ToastManager.show('שגיאת אימות Firebase: ' + error.message, 'error');
-                                // Fallback to local storage if Firebase auth fails
-                                if (StorageManager.load()) {
-                                    ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
-                                } else {
-                                    console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם Firebase וגם אחסון מקומי נכשלו)");
-                                    ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
-                                }
-                                populateCityFilter();
-                                renderMarkers();
-                                updateParticipantCount();
-                            }
-                        }
-                    });
-                } catch (error) {
-                    console.error("Error initializing Firebase:", error);
-                    ToastManager.show('שגיאת אתחול Firebase: ' + error.message, 'error');
-                    // Fallback to local storage if Firebase initialization fails
-                    if (StorageManager.load()) {
-                        ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
-                    } else {
-                        console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם Firebase וגם אחסון מקומי נכשלו)");
-                        ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
-                    }
-                    populateCityFilter();
-                    renderMarkers();
-                    updateParticipantCount();
-                }
-            },
-            listenForParticipants() {
-                if (!db || !firebaseAuthReady || !currentUserId) {
-                    console.log("Firebase not ready or user not authenticated yet. Skipping data fetch.");
-                    return;
-                }
-                const participantsColRef = collection(db, `artifacts/${appId}/public/data/participants`);
-                onSnapshot(participantsColRef, (snapshot) => {
-                    const fetchedParticipants = [];
-                    snapshot.forEach(doc => {
-                        fetchedParticipants.push({ id: doc.id, ...doc.data() });
-                    });
-                    window.participants = fetchedParticipants; 
-                    StorageManager.save(); 
-                    populateCityFilter();
-                    renderMarkers();
-                    updateParticipantCount();
-                    ToastManager.show(`נתונים טעונים/סונכרנו מ-Firestore. סה"כ: ${window.participants.length} משתתפים.`, 'success');
-                }, (error) => {
-                    console.error("Error listening to participants collection:", error);
-                    ToastManager.show('שגיאה בטעינת משתתפים מ-Firestore: ' + error.message, 'error');
-                    // Fallback to local storage if Firestore listener fails
-                    if (StorageManager.load()) {
-                        ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
-                    } else {
-                        console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם Firestore וגם אחסון מקומי נכשלו)");
-                        ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
-                    }
-                    populateCityFilter();
-                    renderMarkers();
-                    updateParticipantCount();
-                });
-            },
-            async addParticipant(participantData) {
-                if (!db || !firebaseAuthReady || !currentUserId) {
-                    ToastManager.show("שגיאת Firebase: לא מאומת או לא מאותחל.", "error");
-                    return;
-                }
-                try {
-                    const docRef = await addDoc(collection(db, `artifacts/${appId}/public/data/participants`), participantData);
-                    ToastManager.show(`משתתף "${participantData.name}" נוסף בהצלחה ל-Firestore!`, 'success');
-                    console.log("Document written with ID: ", docRef.id);
-                } catch (e) {
-                    console.error("Error adding document: ", e);
-                    ToastManager.show(`שגיאה בהוספת משתתף: ${e.message}`, 'error');
-                }
-            },
-            async updateParticipant(docId, updatedData) {
-                if (!db || !firebaseAuthReady || !currentUserId) {
-                    ToastManager.show("שגיאת Firebase: לא מאומת או לא מאותחל.", "error");
-                    return;
-                }
-                try {
-                    const participantRef = doc(db, `artifacts/${appId}/public/data/participants`, docId);
-                    await updateDoc(participantRef, updatedData);
-                    ToastManager.show(`משתתף "${updatedData.name}" עודכן בהצלחה ב-Firestore!`, 'success');
-                } catch (e) {
-                    console.error("Error updating document: ", e);
-                    ToastManager.show(`שגיאה בעדכון משתתף: ${e.message}`, 'error');
-                }
-            },
-            async deleteParticipant(docId, name) {
-                if (!db || !firebaseAuthReady || !currentUserId) {
-                    ToastManager.show("שגיאת Firebase: לא מאומת או לא מאותחל.", "error");
-                    return;
-                }
-                try {
-                    const participantRef = doc(db, `artifacts/${appId}/public/data/participants`, docId);
-                    await deleteDoc(participantRef);
-                    ToastManager.show(`משתתף "${name}" נמחק בהצלחה מ-Firestore!`, 'success');
-                } catch (e) {
-                    console.error("Error deleting document: ", e);
-                    ToastManager.show(`שגיאה במחיקת משתתף: ${e.message}`, 'error');
-                }
-            }
-        };
-
-        window.FirebaseManager = FirebaseManager;
-
+        // נתונים בסיסיים - 35 משתמשים לדוגמה (שולפו מהקוד המקורי שלך)
         let participants = [
             {name: 'נועה בר', city: 'תל אביב', lat: 32.0853, lon: 34.7818, phone: '0501111111', whatsapp: '0501111111'},
             {name: 'דוד לוי', city: 'חיפה', lat: 32.7940, lon: 34.9896, phone: '0522222222', whatsapp: '0522222222'},
@@ -965,13 +802,13 @@
         const adminPassword = "1234";
         let editParticipantId = null; // Changed from editIdx to store Firestore doc ID
 
-        // מערכת אחסון מתקדמת - localStorage (used as cache for Firestore)
+        // מערכת אחסון מתקדמת - localStorage
         const StorageManager = {
             save: () => {
                 try {
                     localStorage.setItem('maya-participants', JSON.stringify(window.participants));
                     localStorage.setItem('maya-last-update', new Date().toISOString());
-                    console.log("� נתונים נשמרו ב-localStorage");
+                    console.log("💾 נתונים נשמרו ב-localStorage");
                 } catch (error) {
                     console.error("❌ שגיאה בשמירת נתונים:", error);
                 }
@@ -1077,7 +914,7 @@
         const fileInput = document.getElementById('file-input');
         const cityFilter = document.getElementById('city-filter'); 
 
-        // פונקציות עזר
+        // פונקציות עזר - הועברו לסקופ גלובלי או לאובייקטים מתאימים
         function distance(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -1101,17 +938,16 @@
                 throw new Error('לא נמצא מיקום לעיר שהוזנה');
             } catch (error) {
                 console.error(`❌ שגיאה בחיפוש מיקום עבור ${city}:`, error);
+                ToastManager.show('שגיאה בחיפוש מיקום העיר: ' + error.message, 'error'); // שימוש ב-ToastManager
                 throw new Error('שגיאה בחיפוש מיקום העיר');
             }
         }
 
-        // עדכון מספר משתתפים
         function updateParticipantCount() {
             participantCount.textContent = `${window.participants.length} משתתפים`;
             console.log(`📊 עודכן מספר משתתפים: ${window.participants.length}`);
         }
         
-        // Populate city filter dropdown
         function populateCityFilter() { 
             const cities = [...new Set(window.participants.map(user => user.city))].sort((a,b) => a.localeCompare(b, 'he')); 
             const currentCity = cityFilter.value; 
@@ -1120,7 +956,6 @@
             cityFilter.value = cities.includes(currentCity) ? currentCity : ""; 
         }
 
-        // Apply search and city filters
         function applyFilters() { 
             const searchTerm = searchInput.value.trim().toLowerCase(); 
             const selectedCity = cityFilter.value; 
@@ -1134,18 +969,14 @@
             renderMarkers(filtered); 
         }
 
-        // הגדרת קבוצת קלאסטרים של סמנים (Marker Cluster Group)
         let markers = L.markerClusterGroup(); 
 
-        // הוספת סמנים למפה באמצעות MarkerClusterGroup
         function renderMarkers(list = window.participants) {
             console.log("🗺️ מציג סמנים על המפה באמצעות MarkerClusterer...");
             
-            // נקה את כל הסמנים הקיימים מקבוצת הקלאסטרים
             markers.clearLayers(); 
             
             list.forEach(p => {
-                // ודא שקואורדינטות קיימות ותקפות לפני יצירת סמן
                 if (p.lat === null || isNaN(p.lat) || p.lon === null || isNaN(p.lon)) {
                     console.warn(`Participant ${p.name} has invalid coordinates and will be skipped for marker display.`);
                     return; 
@@ -1155,27 +986,29 @@
                 const hasWhatsapp = whatsappNum && whatsappNum.length >= 9;
                 
                 let carpoolButtonHTML = '';
-                // מצא משתמשים קרובים עבור כפתור קארפול (על בסיס קואורדינטות מקוריות)
                 const nearbyUsers = window.participants.filter(other => 
-                    p !== other && // אל תכלול את המשתמש הנוכחי
-                    other.lat !== null && other.lon !== null && // ודא קואורדינטות תקפות לחישוב
-                    distance(p.lat, p.lon, other.lat, other.lon) <= 20 // רדיוס 20 ק"מ לקארפול
+                    p !== other && 
+                    other.lat !== null && other.lon !== null && 
+                    distance(p.lat, p.lon, other.lat, other.lon) <= 20 
                 );
 
                 if (nearbyUsers.length > 0) {
-                    const allNames = [p, ...nearbyUsers].map(user => user.name.split(' ')[0]).join(', '); // השתמש רק בשם פרטי
+                    const allNames = [p, ...nearbyUsers].map(user => user.name.split(' ')[0]).join(', '); 
                     const encodedMessage = encodeURIComponent(`היי, מתארגנים על טרמפ למשלחת מהאזור שלנו! 😊\nהנה מי שקרוב: ${allNames}.\nמי רוצה להצטרף?`);
                     carpoolButtonHTML = `<a href="https://api.whatsapp.com/send?text=${encodedMessage}" target="_blank" class="popup-btn carpool">
                                             <span class="material-symbols-outlined">directions_car</span>תיאום נסיעה
                                         </a>`;
                 }
 
-                // Use p.id for Firebase operations
+                // In this "No-Firebase" version, `p.id` won't be from Firestore.
+                // We'll use a placeholder or simply not pass ID for local operations if not needed.
+                // For now, removing `p.id` from `onclick` calls to prevent errors if not set.
+                // When Firestore is re-integrated, `p.id` will be correctly passed.
                 const adminButtons = admin ? `
-                    <button class="popup-btn edit" onclick="editUser('${p.id}')">
+                    <button class="popup-btn edit" onclick="editUser(participants.indexOf(p))">
                         <span class="material-symbols-outlined">edit</span>ערוך
                     </button>
-                    <button class="popup-btn delete" onclick="deleteUser('${p.id}', '${p.name}')">
+                    <button class="popup-btn delete" onclick="deleteUser(participants.indexOf(p), '${p.name}')">
                         <span class="material-symbols-outlined">delete</span>מחק
                     </button>
                 ` : '';
@@ -1197,7 +1030,7 @@
                                 צור קשר
                             </a>
                             ${hasWhatsapp ? `
-                            <a href="https://wa.com/972${whatsappNum.replace(/^0/,'')}" class="popup-btn whatsapp" target="_blank">
+                            <a href="https://wa.me/972${whatsappNum.replace(/^0/,'')}" class="popup-btn whatsapp" target="_blank">
                                 <span class="material-symbols-outlined">chat</span>
                                 וואטסאפ
                             </a>
@@ -1219,16 +1052,16 @@
         }
 
         // פונקציות גלובליות לשימוש בפופאפ
-        window.editUser = function(participantId) {
+        // Updated editUser/deleteUser for local operations (no Firestore ID)
+        window.editUser = function(idx) { // Now accepts index, not Firestore ID
             return AdminGuard.requireAdmin(() => {
-                // Find participant by ID from the global window.participants array
-                const p = window.participants.find(p => p.id === participantId);
+                const p = window.participants[idx];
                 if (!p) {
                     ToastManager.show('משתתף לא נמצא לעריכה.', 'error');
                     return;
                 }
                 console.log(`✏️ עריכת משתמש: ${p.name}`);
-                editParticipantId = participantId; // Store Firestore doc ID for update
+                editParticipantId = idx; // Store index for local array update
                 document.getElementById('user-form-title').innerText = '✏️ עריכת משתתף';
                 document.getElementById('user-name').value = p.name;
                 document.getElementById('user-city').value = p.city;
@@ -1238,13 +1071,18 @@
             });
         };
 
-        window.deleteUser = function(participantId, name) {
+        window.deleteUser = function(idx, name) { // Now accepts index, not Firestore ID
             return AdminGuard.requireAdmin(() => {
-                ToastManager.show(`מוחק את ${name}...`, 'warning');
-                FirebaseManager.deleteParticipant(participantId, name);
-                // Firestore listener will automatically update the map
+                ToastManager.show(`האם אתה בטוח שברצונך למחוק את ${name}? (הפעולה תבוצע מקומית)`, 'warning');
+                // Simulate deletion for UI, actual deletion requires server-side Google Apps Script integration
+                window.participants.splice(idx, 1);
+                StorageManager.save(); // Save changes to local storage
+                renderMarkers(); // Re-render map
+                updateParticipantCount(); // Update count
+                ToastManager.show(`${name} נמחק בהצלחה (מקומי)`);
             });
         };
+
 
         window.suggestCarpool = function(name, phone) {
             console.log(`🚗 הצעת נסיעה משותפת ל: ${name}`);
@@ -1304,7 +1142,6 @@
                         const lon = parseFloat(obj['Lon']);
 
                         return { 
-                            // IMPORTANT: No 'id' from Google Sheets. IDs will come from Firestore.
                             name: `${obj['שם פרטי'] || ''} ${obj['שם משפחה'] || ''}`.trim(), 
                             firstName: obj['שם פרטי'] || '', 
                             lastName: obj['שם משפחה'] || '', 
@@ -1316,23 +1153,18 @@
                         };
                     }).filter(p => p.name && p.lat !== null && p.lon !== null); 
 
-                    // This function is now mainly for "Import from Excel" for initial data migration TO Firestore,
-                    // or for when Firestore is not working.
-                    // If Firestore is working, the onSnapshot listener will handle window.participants updates.
-                    if (FirebaseManager.firebaseAuthReady) { // If Firebase is ready, import to Firestore
-                        ToastManager.show(`מייבא נתונים מגיליון גוגל ל-Firestore.`, 'info');
-                        // Add participants to Firestore (this will trigger listener to update map)
-                        fetchedParticipants.forEach(p => FirebaseManager.addParticipant(p));
-                    } else { // Fallback to local storage if Firebase not ready
-                        window.participants = fetchedParticipants; 
-                        StorageManager.save(); 
-                        if (isManual) ToastManager.show(`סונכרנו ${window.participants.length} משתתפים מגיליון גוגל (כגיבוי).`, 'success');
-                        this.updateUI(); 
-                    }
+                    // In this version, we always overwrite local participants with sheet data
+                    window.participants = fetchedParticipants; 
+                    StorageManager.save(); 
+                    if (isManual) ToastManager.show(`סונכרנו ${window.participants.length} משתתפים מגיליון גוגל.`, 'success');
+                    populateCityFilter(); // Call global populateCityFilter
+                    renderMarkers(); // Call global renderMarkers
+                    updateParticipantCount(); // Call global updateParticipantCount
                     
                 } catch (error) {
                     console.error("❌ Data load error from Google Sheet:", error);
                     ToastManager.show(`שגיאה בטעינת נתונים מגיליון גוגל: ${error.message}`, 'error');
+                    // Fallback handled by DOMContentLoaded below if this fails
                     throw error; 
                 } finally {
                      if(document.getElementById('sync-btn')?.querySelector('.material-symbols-outlined')) {
@@ -1452,23 +1284,15 @@
                     whatsapp: GoogleSheetsSync.formatPhone(item['מספר ווצאפ'] || '')
                 };
                 
-                // Add directly to Firestore
-                if (admin && FirebaseManager.firebaseAuthReady) {
-                    await FirebaseManager.addParticipant(newParticipantData);
-                    successCount++;
-                } else {
-                    // Fallback to local array for import preview if not authenticated admin
-                    window.participants.push(newParticipantData);
-                    successCount++; // Count even if not in Firestore, for local view
-                }
+                // Add to local array
+                window.participants.push(newParticipantData);
+                successCount++; 
                 await new Promise(resolve => setTimeout(resolve, 200)); 
             }
             
             StorageManager.save(); // Save the local state
-            if (!FirebaseManager.firebaseAuthReady) { // If Firestore is not updating, manually update UI
-                renderMarkers();
-                updateParticipantCount();
-            }
+            renderMarkers();
+            updateParticipantCount();
             ToastManager.show(`יובאו בהצלחה ${successCount} משתתפים!`);
         }
 
@@ -1611,16 +1435,26 @@
                         lastName: name.split(' ').slice(1).join(' ') || '' 
                     };
 
-                    if (editParticipantId !== null) { // editParticipantId will hold the Firestore doc ID for updates
-                        console.log(`✏️ עודכן משתמש (Firestore): ${name}`);
-                        await FirebaseManager.updateParticipant(editParticipantId, participantData);
-                    } else { // Add new participant
-                        console.log(`➕ נוסף משתמש חדש (Firestore): ${name}`);
-                        await FirebaseManager.addParticipant(participantData);
+                    // Local participants array update
+                    if (editParticipantId !== null) { 
+                        const indexToUpdate = window.participants.findIndex(p => p.name === participantData.name && p.city === participantData.city); // Find by unique combo if ID not present
+                        if (indexToUpdate !== -1) {
+                            window.participants[indexToUpdate] = participantData;
+                            ToastManager.show(`${name} עודכן בהצלחה (מקומי)!`);
+                        } else {
+                            // This case implies a new name was entered for an edit, treat as new add
+                            window.participants.push(participantData);
+                            ToastManager.show(`${name} נוסף בהצלחה (מקומי)!`);
+                        }
+                    } else { 
+                        window.participants.push(participantData);
+                        ToastManager.show(`${name} נוסף בהצלחה (מקומי)!`);
                     }
                     
+                    StorageManager.save();
                     userModal.hidden = true;
-                    // Firestore listener will handle updating window.participants, renderMarkers, updateParticipantCount
+                    renderMarkers();
+                    updateParticipantCount();
                     
                 } catch (err) {
                     console.error("❌ שגיאה בשמירת משתמש:", err);
@@ -1663,24 +1497,40 @@
         // קריאה ראשונה ל-invalidateSize לאחר טעינה
         setTimeout(() => { map.invalidateSize(); }, 500); 
 
-        // טעינת נתונים ו-Firebase Initialization
+        // טעינת נתונים והאתחול הכללי
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log("🚀 מתחיל עיבוד נתונים ראשוני ואיחול Firebase...");
+            console.log("🚀 מתחיל עיבוד נתונים ראשוני...");
             
-            // Initialize Firebase first
-            // This will also set up the Firestore listener
-            await FirebaseManager.initializeFirebase();
-
-            // The sync button still uses GoogleSheetsSync.loadData for manual import/refresh
+            try {
+                // נסה לטעון מגיליון גוגל קודם
+                await GoogleSheetsSync.loadData(true); 
+            } catch (error) {
+                console.error("❌ טעינה מגיליון גוגל נכשלה:", error);
+                ToastManager.show("שגיאה בטעינת נתונים מגיליון גוגל. מנסה לטעון מזיכרון מקומי.", 'error');
+                // אם הטעינה מגיליון גוגל נכשלה, נסה מ-localStorage
+                if (StorageManager.load()) {
+                    ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
+                } else {
+                    console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם גיליון גוגל וגם אחסון מקומי נכשלו)");
+                    ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
+                    // participants array כבר מכיל את הנתונים המקודדים
+                }
+            }
+            
+            // טעינה ראשונית ועדכון UI לאחר שהנתונים נטענו מאיזשהו מקור
+            populateCityFilter();
+            renderMarkers();
+            updateParticipantCount();
+            
+            // מאזיני אירועים נוספים
             document.getElementById('sync-btn').addEventListener('click', () => GoogleSheetsSync.loadData(true));
             
-            // Handle click on reset view FAB
             document.getElementById('reset-view-fab').addEventListener('click', () => {
                 map.setView([31.5, 34.75], 8); // Reset to Israel center and zoom
                 ToastManager.show('הצגת מפה אופסה למרכז ישראל', 'info');
             });
 
-
+            GoogleSheetsSync.startAutoSync(); // התחלת סנכרון אוטומטי
             console.log("✅ אפליקציית מאיה מוכנה לשימוש!");
 
             // 📊 סטטיסטיקות למפתחים
@@ -1694,7 +1544,7 @@
             🔍 חיפוש: זמין
             🚗 נסיעות משותפות: זמין
             📊 יבוא/יצוא Excel: זמין לאדמין
-            💾 אחסון: Firestore (ראשי) / localStorage (גיבוי)
+            💾 אחסון: localStorage (ראשי) / Google Sheets (טעינה חד פעמית)
             🔐 הגנת אדמין: מתקדמת
             `);
         });
