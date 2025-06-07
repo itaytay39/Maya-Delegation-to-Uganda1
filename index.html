@@ -617,10 +617,6 @@
                 padding: 0.25rem 0.5rem;
             }
 
-            .admin-controls {
-                flex-direction: column;
-            }
-
             /* Responsive Popup Buttons */
             .popup-btns {
                 grid-template-columns: 1fr; /* Single column for very small screens */
@@ -1036,6 +1032,8 @@
             cityFilter.value = cities.includes(currentCity) ? currentCity : ""; 
         }
 
+        let markers = L.markerClusterGroup(); 
+
         function renderMarkers(list = participants) {
             console.log("🗺️ מציג סמנים על המפה...");
             
@@ -1045,70 +1043,103 @@
             }
             markers = L.markerClusterGroup(); // Initialize MarkerClusterGroup here
 
-            list.forEach((p, idx) => {
-                const whatsappNum = (p.whatsapp && p.whatsapp.length > 0) ? p.whatsapp : p.phone;
-                const hasWhatsapp = whatsappNum && whatsappNum.length >= 9;
-                
-                let nearby = null;
-                for (let j = 0; j < participants.length; j++) {
-                    const other = participants[j];
-                    if (other === p) continue;
-                    if (
-                        typeof other.lat === "number" &&
-                        typeof other.lon === "number" &&
-                        distance(p.lat, p.lon, other.lat, other.lon) <= 20
-                    ) {
-                        nearby = other;
-                        break;
-                    }
+            const groupedLocations = {};
+            list.forEach(p => {
+                const key = `${p.lat},${p.lon}`;
+                if (!groupedLocations[key]) {
+                    groupedLocations[key] = [];
                 }
-
-                const popup = `
-                    <div class="popup-box">
-                        <div class="popup-name">
-                            <span class="material-symbols-outlined" style="color: #6366f1;">person</span>
-                            ${p.name}
-                        </div>
-                        <div class="popup-city">
-                            <span class="material-symbols-outlined" style="color: #6366f1;">location_on</span>
-                            <span>${p.city}</span>
-                        </div>
-                        <div class="popup-phone">📞 ${p.phone.replace(/^0(\d{2,3})(\d{7})$/, '0$1-$2')}</div>
-                        <div class="popup-btns">
-                            <a href="tel:${p.phone}" class="popup-btn phone" target="_blank">
-                                <span class="material-symbols-outlined">call</span>
-                                צור קשר
-                            </a>
-                            ${hasWhatsapp ? `
-                            <a href="https://wa.me/972${whatsappNum.replace(/^0/,'')}" class="popup-btn whatsapp" target="_blank">
-                                <span class="material-symbols-outlined">chat</span>
-                                וואטסאפ
-                            </a>
-                            ` : ''}
-                            ${admin ? `
-                            <button class="popup-btn edit" onclick="editUser(${idx})">
-                                <span class="material-symbols-outlined">edit</span>
-                                ערוך
-                            </button>
-                            <button class="popup-btn delete" onclick="deleteUser(${idx})">
-                                <span class="material-symbols-outlined">delete</span>
-                                מחק
-                            </button>
-                            ` : ''}
-                            ${nearby && hasWhatsapp ? `
-                            <button class="popup-btn carpool" onclick="suggestCarpool('${p.name}', '${whatsappNum}')">
-                                <span class="material-symbols-outlined">directions_car</span>
-                                הצע נסיעה משותפת
-                            </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-                
-                const marker = L.marker([p.lat, p.lon], {icon: modernMarkerIcon});
-                marker.bindPopup(popup, {closeButton: true, maxWidth: 350});
-                markers.addLayer(marker); // Add to MarkerClusterGroup
+                groupedLocations[key].push(p);
             });
+
+            // Process each group of identical coordinates
+            for (const key in groupedLocations) {
+                const group = groupedLocations[key];
+                const baseLat = group[0].lat;
+                const baseLon = group[0].lon;
+
+                group.forEach((p, indexInGroup) => {
+                    if (p.lat === null || isNaN(p.lat) || p.lon === null || isNaN(p.lon)) {
+                        console.warn(`Participant ${p.name} has invalid coordinates and will be skipped for marker display.`);
+                        return; 
+                    }
+
+                    // Apply a small deterministic offset for markers at the exact same location
+                    // This creates a "spiderfy" effect when the cluster expands
+                    const offsetMagnitude = 0.00005; // Smaller offset for finer spread
+                    const angleStep = (2 * Math.PI) / group.length;
+                    const angle = indexInGroup * angleStep;
+                    const offsetX = offsetMagnitude * Math.cos(angle);
+                    const offsetY = offsetMagnitude * Math.sin(angle);
+
+                    const finalLat = baseLat + offsetY;
+                    const finalLon = baseLon + offsetX;
+
+
+                    const whatsappNum = (p.whatsapp && p.whatsapp.length > 0) ? p.whatsapp : p.phone;
+                    const hasWhatsapp = whatsappNum && whatsappNum.length >= 9;
+                    
+                    let nearby = null;
+                    for (let j = 0; j < participants.length; j++) {
+                        const other = participants[j];
+                        if (other === p) continue;
+                        if (
+                            typeof other.lat === "number" &&
+                            typeof other.lon === "number" &&
+                            distance(p.lat, p.lon, other.lat, other.lon) <= 20
+                        ) {
+                            nearby = other;
+                            break;
+                        }
+                    }
+
+                    const popup = `
+                        <div class="popup-box">
+                            <div class="popup-name">
+                                <span class="material-symbols-outlined" style="color: var(--md-primary);">person</span>
+                                ${p.name}
+                            </div>
+                            <div class="popup-city">
+                                <span class="material-symbols-outlined" style="color: var(--md-primary);">location_on</span>
+                                <span>${p.city}</span>
+                            </div>
+                            <div class="popup-phone">📞 ${p.phone.replace(/^0(\d{2,3})(\d{7})$/, '0$1-$2')}</div>
+                            <div class="popup-btns">
+                                <a href="tel:${p.phone}" class="popup-btn phone" target="_blank">
+                                    <span class="material-symbols-outlined">call</span>
+                                    צור קשר
+                                </a>
+                                ${hasWhatsapp ? `
+                                <a href="https://wa.me/972${whatsappNum.replace(/^0/,'')}" class="popup-btn whatsapp" target="_blank">
+                                    <span class="material-symbols-outlined">chat</span>
+                                    וואטסאפ
+                                </a>
+                                ` : ''}
+                                ${admin ? `
+                                <button class="popup-btn edit" onclick="editUser(${participants.indexOf(p)})">
+                                    <span class="material-symbols-outlined">edit</span>
+                                    ערוך
+                                </button>
+                                <button class="popup-btn delete" onclick="deleteUser(${participants.indexOf(p)})">
+                                    <span class="material-symbols-outlined">delete</span>
+                                    מחק
+                                </button>
+                                ` : ''}
+                                ${nearby && hasWhatsapp ? `
+                                <button class="popup-btn carpool" onclick="suggestCarpool('${p.name}', '${whatsappNum}')">
+                                    <span class="material-symbols-outlined">directions_car</span>
+                                    הצע נסיעה משותפת
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    const marker = L.marker([finalLat, finalLon], {icon: modernMarkerIcon});
+                    marker.bindPopup(popup, {closeButton: true, maxWidth: 350});
+                    markers.addLayer(marker); // Add to MarkerClusterGroup
+                });
+            }
             
             map.addLayer(markers); // Add the MarkerClusterGroup to map
             
