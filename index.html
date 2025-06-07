@@ -426,8 +426,8 @@
             background: none !important;
             border-radius: 50%;
             padding: 0;
-            width: 32px;
-            height: 32px;
+            width: 32px; /* Increased width for touch target */
+            height: 32px; /* Increased height for touch target */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -488,11 +488,11 @@
         }
 
         .popup-btns {
-            display: flex;
-            flex-direction: row; /* Changed to row */
-            flex-wrap: wrap; /* Allow buttons to wrap to next line */
-            justify-content: center; /* Center buttons */
+            display: grid; /* Changed to grid for better control over layout */
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Adaptive columns */
             gap: 0.5rem; /* Reduced gap */
+            justify-content: center; /* Center buttons */
+            margin-top: 0.8rem; /* Space from phone number */
         }
 
         .popup-btn {
@@ -511,9 +511,6 @@
             color: white !important;
             font-family: 'Heebo', sans-serif;
             min-height: 40px; /* Reduced min-height */
-            flex-grow: 1; /* Allow buttons to grow */
-            flex-basis: calc(50% - 0.25rem); /* Two buttons per row on larger mobile screens */
-            max-width: 140px; /* Limit button width */
             box-shadow: var(--md-shadow); /* Add subtle shadow to buttons */
         }
 
@@ -627,8 +624,10 @@
             }
 
             /* Responsive Popup Buttons */
+            .popup-btns {
+                grid-template-columns: 1fr; /* Single column for very small screens */
+            }
             .popup-btn {
-                flex-basis: 100%; /* Full width for very small screens */
                 max-width: none;
             }
         }
@@ -754,7 +753,7 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
-    <!-- Firebase SDKs - will be fully integrated next -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -774,6 +773,23 @@
         const FirebaseManager = {
             async initializeFirebase() {
                 try {
+                    // Check if projectId is provided
+                    if (!firebaseConfig.projectId) {
+                        console.error("Firebase: projectId not provided in firebaseConfig.");
+                        ToastManager.show('שגיאת אתחול Firebase: projectId חסר. אנא הגדר את Firebase.', 'error');
+                        // Fallback to local storage if Firebase initialization fails
+                        if (StorageManager.load()) {
+                            ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
+                        } else {
+                            console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם Firebase וגם אחסון מקומי נכשלו)");
+                            ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
+                        }
+                        populateCityFilter();
+                        renderMarkers();
+                        updateParticipantCount();
+                        return; // Exit if projectId is missing
+                    }
+
                     const app = initializeApp(firebaseConfig);
                     db = getFirestore(app);
                     auth = getAuth(app);
@@ -800,12 +816,32 @@
                             } catch (error) {
                                 console.error("Error during Firebase authentication:", error);
                                 ToastManager.show('שגיאת אימות Firebase: ' + error.message, 'error');
+                                // Fallback to local storage if Firebase auth fails
+                                if (StorageManager.load()) {
+                                    ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
+                                } else {
+                                    console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם Firebase וגם אחסון מקומי נכשלו)");
+                                    ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
+                                }
+                                populateCityFilter();
+                                renderMarkers();
+                                updateParticipantCount();
                             }
                         }
                     });
                 } catch (error) {
                     console.error("Error initializing Firebase:", error);
                     ToastManager.show('שגיאת אתחול Firebase: ' + error.message, 'error');
+                    // Fallback to local storage if Firebase initialization fails
+                    if (StorageManager.load()) {
+                        ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
+                    } else {
+                        console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם Firebase וגם אחסון מקומי נכשלו)");
+                        ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
+                    }
+                    populateCityFilter();
+                    renderMarkers();
+                    updateParticipantCount();
                 }
             },
             listenForParticipants() {
@@ -828,6 +864,16 @@
                 }, (error) => {
                     console.error("Error listening to participants collection:", error);
                     ToastManager.show('שגיאה בטעינת משתתפים מ-Firestore: ' + error.message, 'error');
+                    // Fallback to local storage if Firestore listener fails
+                    if (StorageManager.load()) {
+                        ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
+                    } else {
+                        console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם Firestore וגם אחסון מקומי נכשלו)");
+                        ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
+                    }
+                    populateCityFilter();
+                    renderMarkers();
+                    updateParticipantCount();
                 });
             },
             async addParticipant(participantData) {
@@ -925,7 +971,7 @@
                 try {
                     localStorage.setItem('maya-participants', JSON.stringify(window.participants));
                     localStorage.setItem('maya-last-update', new Date().toISOString());
-                    console.log("💾 נתונים נשמרו ב-localStorage");
+                    console.log("� נתונים נשמרו ב-localStorage");
                 } catch (error) {
                     console.error("❌ שגיאה בשמירת נתונים:", error);
                 }
@@ -1151,7 +1197,7 @@
                                 צור קשר
                             </a>
                             ${hasWhatsapp ? `
-                            <a href="https://wa.me/972${whatsappNum.replace(/^0/,'')}" class="popup-btn whatsapp" target="_blank">
+                            <a href="https://wa.com/972${whatsappNum.replace(/^0/,'')}" class="popup-btn whatsapp" target="_blank">
                                 <span class="material-symbols-outlined">chat</span>
                                 וואטסאפ
                             </a>
@@ -1202,7 +1248,7 @@
 
         window.suggestCarpool = function(name, phone) {
             console.log(`🚗 הצעת נסיעה משותפת ל: ${name}`);
-            const message = encodeURIComponent(`היי ${name}, רוצה לתאם נסיעה משותפת למשלחת מאיה לאוגנדה? 🚗✈️🇺🇬`);
+            const message = encodeURIComponent(`היי ${name}, רוצה לתאם נסיעה משותפת למשלחת מאיה לאוגנדה? 🚗✈️🇺🇸`);
             window.open(`https://wa.me/972${phone.replace(/^0/,'')}?text=${message}`, '_blank');
         };
 
