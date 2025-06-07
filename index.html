@@ -1037,14 +1037,20 @@
         function renderMarkers(list = participants) {
             console.log("🗺️ מציג סמנים על המפה...");
             
-            // Re-initialize markers group for each renderMarkers call
+            // Clear all existing markers from the map AND the cluster group
             if (markers) {
                 map.removeLayer(markers);
             }
-            markers = L.markerClusterGroup(); // Initialize MarkerClusterGroup here
+            markers = L.markerClusterGroup(); // Re-initialize MarkerClusterGroup for fresh render
 
             const groupedLocations = {};
             list.forEach(p => {
+                // Ensure valid lat/lon before grouping
+                if (p.lat === null || isNaN(p.lat) || p.lon === null || isNaN(p.lon)) {
+                    console.warn(`Participant ${p.name} has invalid coordinates (${p.lat}, ${p.lon}) and will be skipped for marker display.`);
+                    return; 
+                }
+                // Group by exact coordinates
                 const key = `${p.lat},${p.lon}`;
                 if (!groupedLocations[key]) {
                     groupedLocations[key] = [];
@@ -1059,30 +1065,27 @@
                 const baseLon = group[0].lon;
 
                 group.forEach((p, indexInGroup) => {
-                    if (p.lat === null || isNaN(p.lat) || p.lon === null || isNaN(p.lon)) {
-                        console.warn(`Participant ${p.name} has invalid coordinates and will be skipped for marker display.`);
-                        return; 
-                    }
+                    let finalLat = baseLat;
+                    let finalLon = baseLon;
 
                     // Apply a small deterministic offset for markers at the exact same location
-                    // This creates a "spiderfy" effect when the cluster expands
-                    const offsetMagnitude = 0.00005; // Smaller offset for finer spread
-                    const angleStep = (2 * Math.PI) / group.length;
-                    const angle = indexInGroup * angleStep;
-                    const offsetX = offsetMagnitude * Math.cos(angle);
-                    const offsetY = offsetMagnitude * Math.sin(angle);
-
-                    const finalLat = baseLat + offsetY;
-                    const finalLon = baseLon + offsetX;
-
+                    if (group.length > 1) {
+                        const offsetMagnitude = 0.00005 * (indexInGroup + 1); // Increase offset for more items
+                        const angleStep = (2 * Math.PI) / group.length;
+                        const angle = indexInGroup * angleStep;
+                        finalLat = baseLat + offsetMagnitude * Math.sin(angle);
+                        finalLon = baseLon + offsetMagnitude * Math.cos(angle);
+                    }
 
                     const whatsappNum = (p.whatsapp && p.whatsapp.length > 0) ? p.whatsapp : p.phone;
                     const hasWhatsapp = whatsappNum && whatsappNum.length >= 9;
                     
                     let nearby = null;
+                    // For nearby users, search within the *original* participants array to find distance
+                    const currentParticipantIndex = participants.indexOf(p);
                     for (let j = 0; j < participants.length; j++) {
+                        if (j === currentParticipantIndex) continue; // Skip self
                         const other = participants[j];
-                        if (other === p) continue;
                         if (
                             typeof other.lat === "number" &&
                             typeof other.lon === "number" &&
@@ -1444,48 +1447,58 @@
         window.addEventListener('resize', () => { map.invalidateSize(); });
         setTimeout(() => { map.invalidateSize(); }, 500);
 
-        // טעינת נתונים מ-localStorage או שימוש בברירת מחדל
-        console.log("🚀 מתחיל עיבוד נתונים ראשוני...");
-        if (!StorageManager.load()) {
-            console.log("📦 משתמש בנתונים לדוגמה");
-            StorageManager.save(); // שמירה ראשונית
-        }
+        // טעינת נתונים והאתחול הכללי
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log("🚀 מתחיל עיבוד נתונים ראשוני...");
+            
+            try {
+                // נסה לטעון מגיליון גוגל קודם
+                await GoogleSheetsSync.loadData(true); 
+            } catch (error) {
+                console.error("❌ טעינה מגיליון גוגל נכשלה:", error);
+                ToastManager.show("שגיאה בטעינת נתונים מגיליון גוגל. מנסה לטעון מזיכרון מקומי.", 'error');
+                // אם הטעינה מגיליון גוגל נכשלה, נסה מ-localStorage
+                if (StorageManager.load()) {
+                    ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
+                } else {
+                    console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם גיליון גוגל וגם אחסון מקומי נכשלו)");
+                    ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
+                    // participants array כבר מכיל את הנתונים המקודדים
+                }
+            }
+            
+            // טעינה ראשונית ועדכון UI לאחר שהנתונים נטענו מאיזשהו מקור
+            populateCityFilter();
+            renderMarkers();
+            updateParticipantCount();
+            
+            // מאזיני אירועים נוספים
+            document.getElementById('sync-btn').addEventListener('click', () => GoogleSheetsSync.loadData(true));
+            
+            document.getElementById('reset-view-fab').addEventListener('click', () => {
+                map.setView([31.5, 34.75], 8); // Reset to Israel center and zoom
+                ToastManager.show('הצגת מפה אופסה למרכז ישראל', 'info');
+            });
 
-        renderMarkers();
-        updateParticipantCount();
-        console.log("✅ אפליקציית מאיה מוכנה לשימוש!");
+            GoogleSheetsSync.startAutoSync(); // התחלת סנכרון אוטומטי
+            console.log("✅ אפליקציית מאיה מוכנה לשימוש!");
 
-        // הוספת CSS לאנימציית slideOut (Original location)
-        const additionalCSS = `
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-        `;
-        const style = document.createElement('style');
-        style.innerHTML = additionalCSS;
-        document.head.appendChild(style);
-
-        // 📊 סטטיסטיקות למפתחים
-        console.log(`
-        📊 סטטיסטיקות המערכת:
-        👥 משתתפים: ${participants.length}
-        🔐 מצב אדמין: ${admin ? 'מחובר' : 'מנותק'}
-        🗺️ מרכז מפה: [31.5, 34.75]
-        🎨 עיצוב: Material Design 3 מתקדם
-        📱 רספונסיבי: מותאם למובייל בלבד
-        🔍 חיפוש: זמין
-        🚗 נסיעות משותפות: זמין
-        📊 יבוא/יצוא Excel: זמין לאדמין
-        💾 אחסון: localStorage
-        🔐 הגנת אדמין: מתקדמת
-        `);
-
-        // Handle click on reset view FAB - added by Gemini, adjusted for Leaflet
-        document.getElementById('reset-view-fab').addEventListener('click', () => {
-            map.setView([31.5, 34.75], 8); // Reset to Israel center and zoom
-            ToastManager.show('הצגת מפה אופסה למרכז ישראל', 'info');
+            // 📊 סטטיסטיקות למפתחים
+            console.log(`
+            📊 סטטיסטיקות המערכת:
+            👥 משתתפים: ${participants.length}
+            🔐 מצב אדמין: ${admin ? 'מחובר' : 'מנותק'}
+            🗺️ מרכז מפה: [31.5, 34.75]
+            🎨 עיצוב: Material Design 3 מתקדם
+            📱 רספונסיבי: מותאם למובייל בלבד
+            🔍 חיפוש: זמין
+            🚗 נסיעות משותפות: זמין
+            📊 יבוא/יצוא Excel: זמין לאדמין
+            💾 אחסון: localStorage
+            🔐 הגנת אדמין: מתקדמת
+            `);
         });
     </script>
 </body>
 </html>
+
