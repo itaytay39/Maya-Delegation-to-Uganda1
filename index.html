@@ -14,93 +14,61 @@
         :root {
             --md-sys-primary: #6750A4;
             --md-sys-on-primary: #FFFFFF;
-            --md-sys-primary-container: #EADDFF;
-            --md-sys-on-primary-container: #21005D;
             --md-sys-surface: #FEF7FF;
             --md-sys-on-surface: #1D1B20;
             --md-sys-surface-variant: #E7E0EC;
             --md-sys-on-surface-variant: #49454F;
-            --md-sys-outline: #79747E;
-            --md-sys-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
-            --md-sys-shape-corner-xl: 28px;
-            --md-sys-shape-corner-large: 16px;
+            --md-sys-shape-xl: 28px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; overflow: hidden; font-family: 'Heebo', sans-serif; }
         body { background: var(--md-sys-background); color: var(--md-sys-on-background); direction: rtl; }
         
-        /* Main App Container (Initially hidden) */
-        #app-container {
+        #app-container, #access-denied-container {
             max-width: 600px; margin: 0 auto; background: var(--md-sys-surface);
-            height: 100%; display: flex; flex-direction: column; overflow: hidden;
-            visibility: hidden; opacity: 0; transition: opacity 0.3s;
+            height: 100%; display: flex; flex-direction: column;
         }
-        #app-container.visible { visibility: visible; opacity: 1; }
+
+        /* --- ACCESS DENIED SCREEN --- */
+        #access-denied-container {
+            align-items: center; justify-content: center; text-align: center;
+            padding: 2rem; display: none;
+        }
+        .access-denied-icon { font-size: 4rem; color: var(--md-sys-primary); margin-bottom: 1.5rem; }
+        .access-denied-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .access-denied-text { font-size: 1.1rem; color: var(--md-sys-on-surface-variant); line-height: 1.6; }
         
-        /* Login Screen */
-        #login-container {
-            position: fixed; inset: 0; display: flex;
-            align-items: center; justify-content: center;
-            background: var(--md-sys-surface);
-            z-index: 5000; transition: opacity 0.3s;
-        }
-        #login-container.hidden { opacity: 0; pointer-events: none; }
-        .login-box {
-            padding: 2rem; width: 100%; max-width: 360px;
-            text-align: center;
-        }
-        .login-box h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
-        .login-box p { color: var(--md-sys-on-surface-variant); margin-bottom: 2rem; }
-        
+        /* --- MAIN APP (Initially hidden) --- */
+        #app-container { display: none; }
+        #app-container.visible { display: flex; }
+
         .header { background: var(--md-sys-surface); padding: 1rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid var(--md-sys-surface-variant); flex-shrink: 0; }
-        .logo-maya { width: 48px; height: 48px; border-radius: 50%; background: var(--md-sys-primary-container); padding: 4px; }
-        .logo-maya img { width: 100%; height: 100%; border-radius: 50%; }
+        .logo-maya { width: 48px; height: 48px; border-radius: 50%; }
         .header-title { font-size: 1.25rem; font-weight: 600; }
-        .header-controls { margin-right: auto; }
-        .icon-button { background: none; border: none; padding: 8px; border-radius: 50%; cursor: pointer; display: flex; color: var(--md-sys-on-surface-variant); }
-        
         .filters-container { padding: 0.5rem 1rem 1rem; background: var(--md-sys-surface); display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; flex-shrink: 0; }
-        .input-container { display: flex; align-items: center; gap: 0.5rem; background: var(--md-sys-surface-variant); border-radius: var(--md-sys-shape-corner-xl); padding: 0.5rem 1rem; }
+        .input-container { display: flex; align-items: center; gap: 0.5rem; background: var(--md-sys-surface-variant); border-radius: var(--md-sys-shape-xl); padding: 0.5rem 1rem; }
         .input-container .material-symbols-outlined { color: var(--md-sys-on-surface-variant); }
         .search-input, #city-filter { width: 100%; border: none; outline: none; font-size: 1rem; background: transparent; appearance: none; color: var(--md-sys-on-surface-variant); }
-        
         .map-container { flex-grow: 1; position: relative; }
         #map { height: 100%; width: 100%; background: #f0f0f0; }
         .participant-count { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.9); padding: 0.5rem 1rem; border-radius: 12px; z-index: 1; font-size: 0.875rem; }
-        
-        .form-group { margin-bottom: 1rem; }
-        .form-input { width: 100%; padding: 1rem; background: var(--md-sys-surface-variant); border-radius: 8px; border: 1px solid var(--md-sys-outline); font-size: 1rem; }
-        .button-group { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
-        .btn { flex: 1; padding: 0.75rem 1rem; border: none; border-radius: var(--md-sys-shape-corner-xl); font-size: 1rem; font-weight: 600; cursor: pointer; }
-        .btn-filled { background: var(--md-sys-primary); color: var(--md-sys-on-primary); }
-        
-        #toast-container { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 3000; }
-        .toast { background: #333; color: white; padding: 0.75rem 1.25rem; border-radius: 12px; }
+        .gm-style-iw-d { overflow: hidden !important; } .gm-style-iw-c { padding: 0 !important; border-radius: 16px !important; }
+        .popup-box { padding: 1rem; text-align: center; max-width: 280px; }
+        .popup-name { font-size: 1.25rem; font-weight: 700; color: var(--md-sys-primary); margin-bottom: 0.25rem; }
+        .popup-city { font-size: 1rem; color: var(--md-sys-on-surface-variant); margin-bottom: 1rem; }
     </style>
 </head>
 <body>
-    <!-- Login Screen -->
-    <div id="login-container">
-        <div class="login-box">
-            <h1>מפת המשלחת של מאיה</h1>
-            <p>יש להזין את פרטי הכניסה שקיבלת</p>
-            <div class="form-group"><input type="email" id="login-email" class="form-input" placeholder="אימייל"></div>
-            <div class="form-group"><input type="password" id="login-password" class="form-input" placeholder="סיסמה"></div>
-            <div class="button-group">
-                <button id="login-button" class="btn btn-filled">כניסה</button>
-            </div>
-             <p id="login-error" style="color: var(--md-sys-error); margin-top: 1rem; visibility: hidden;">פרטי כניסה שגויים</p>
-        </div>
+    <div id="access-denied-container">
+        <span class="material-symbols-outlined access-denied-icon">lock</span>
+        <h1 class="access-denied-title">הגישה נחסמה</h1>
+        <p class="access-denied-text">נראה שאתה מנסה להיכנס ללא קישור ההזמנה.<br>כדי לראות את המפה, אנא השתמש בקישור שנשלח בקבוצת הוואטסאפ של המשלחת.</p>
     </div>
 
-    <!-- Main App (hidden by default) -->
     <div id="app-container">
         <header class="header">
-            <div class="logo-maya"><img src="https://itaytay39.github.io/Maya-Delegation-to-Uganda1/logo.jpg" alt="לוגו מאיה" onerror="this.style.display='none'"></div>
+            <img class="logo-maya" src="https://itaytay39.github.io/Maya-Delegation-to-Uganda1/logo.jpg" alt="לוגו מאיה" onerror="this.style.display='none'">
             <h1 class="header-title">מפת המשלחת</h1>
-            <div class="header-controls">
-                <button id="logout-btn" class="icon-button"><span class="material-symbols-outlined">logout</span></button>
-            </div>
         </header>
         <div class="filters-container">
             <div class="input-container"><span class="material-symbols-outlined">location_city</span><select id="city-filter"><option value="">כל הערים</option></select></div>
@@ -111,15 +79,12 @@
             <div id="participant-count" class="participant-count"></div>
         </main>
     </div>
-    <div id="toast-container"></div>
     
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // *** Your Firebase Configuration is now included ***
         const firebaseConfig = {
           apiKey: "AIzaSyD9Dtp32sofmjDfI3aP3lXskTxRUcF9_Cg",
           authDomain: "maya-delegation-to-uganda.firebaseapp.com",
@@ -128,80 +93,70 @@
           messagingSenderId: "543677265577",
           appId: "1:543677265577:web:7c8f122ed21f6c5aaadbb8"
         };
+        
+        const MAGIC_LINK_SECRET = "UgandaJourney2025";
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- Start of app logic ---
         let map;
         let infoWindow;
-        let markerClusterer;
+        let participants = [];
 
         const elements = {
             appContainer: document.getElementById('app-container'),
-            loginContainer: document.getElementById('login-container'),
-            loginButton: document.getElementById('login-button'),
-            loginEmail: document.getElementById('login-email'),
-            loginPassword: document.getElementById('login-password'),
-            loginError: document.getElementById('login-error'),
-            logoutButton: document.getElementById('logout-btn'),
+            accessDeniedContainer: document.getElementById('access-denied-container'),
             searchInput: document.getElementById('search-input'), 
             cityFilter: document.getElementById('city-filter'),
             participantCount: document.getElementById('participant-count'),
             mapDiv: document.getElementById('map'),
         };
 
-        let participants = [];
-        
-        // --- AUTHENTICATION ---
-        onAuthStateChanged(auth, user => {
-            if (user) {
+        function checkAccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('access_token') === MAGIC_LINK_SECRET) {
                 elements.appContainer.classList.add('visible');
-                elements.loginContainer.classList.add('hidden');
-                if (!map) initMapAndLogic();
+                signInAnonymously(auth)
+                    .then(() => {
+                        console.log("Signed in anonymously.");
+                        initMapAndLogic();
+                    })
+                    .catch(handleAuthError);
             } else {
-                elements.appContainer.classList.remove('visible');
-                elements.loginContainer.classList.remove('hidden');
+                elements.accessDeniedContainer.style.display = 'flex';
             }
-        });
+        }
+        
+        function handleAuthError(error) {
+             console.error("Authentication failed:", error);
+             elements.appContainer.style.display = 'none';
+             elements.accessDeniedContainer.style.display = 'flex';
+        }
 
-        elements.loginButton.addEventListener('click', () => {
-            const email = elements.loginEmail.value;
-            const password = elements.loginPassword.value;
-            elements.loginError.style.visibility = 'hidden';
-            signInWithEmailAndPassword(auth, email, password)
-                .catch(error => {
-                    console.error("Login Error:", error);
-                    elements.loginError.style.visibility = 'visible';
-                });
-        });
-
-        elements.logoutButton.addEventListener('click', () => {
-            signOut(auth);
-        });
-
-        // --- DATA FETCHING & MAP INITIALIZATION ---
         async function loadDataFromFirestore() {
             try {
-                const querySnapshot = await getDocs(collection(db, "participants"));
+                const q = query(collection(db, "participants"));
+                const querySnapshot = await getDocs(q);
                 participants = [];
                 querySnapshot.forEach((doc) => {
-                    participants.push(doc.data());
+                    const data = doc.data();
+                    // Ensure lat and lon are numbers
+                    data.lat = parseFloat(data.Lat);
+                    data.lon = parseFloat(data.Lon);
+                    participants.push(data);
                 });
                 populateCityFilter();
                 applyFilters();
             } catch (error) {
-                console.error("Error fetching data from Firestore: ", error);
-                alert("שגיאה בטעינת הנתונים מהשרת המאובטח.");
+                console.error("Firestore Error:", error);
+                alert("שגיאה בטעינת נתוני הקבוצה.");
             }
         }
 
         async function initMapAndLogic() {
-            const { Map } = await google.maps.importLibrary("maps");
-            const { MarkerClusterer } = await google.maps.importLibrary("markerclusterer");
-            infoWindow = new google.maps.InfoWindow();
+            const { Map, InfoWindow } = await google.maps.importLibrary("maps");
+            infoWindow = new InfoWindow();
             
             map = new Map(elements.mapDiv, {
                 center: { lat: 31.5, lng: 34.75 }, zoom: 8,
@@ -214,39 +169,52 @@
             await loadDataFromFirestore();
         }
 
-        // --- FILTERING AND RENDERING ---
         function applyFilters() {
             const searchTerm = elements.searchInput.value.trim().toLowerCase();
             const selectedCity = elements.cityFilter.value;
             let filtered = participants;
-            if (selectedCity) filtered = filtered.filter(p => p.city === selectedCity);
-            if (searchTerm) filtered = filtered.filter(p => p.name && p.name.toLowerCase().includes(searchTerm));
+            if (selectedCity) {
+                filtered = filtered.filter(p => p.city === selectedCity);
+            }
+            if (searchTerm) {
+                filtered = filtered.filter(p => p.name && p.name.toLowerCase().includes(searchTerm));
+            }
             renderMarkers(filtered);
         }
         
         function populateCityFilter() {
-            const cities = [...new Set(participants.map(user => user.city))].sort((a,b) => a.localeCompare(b, 'he'));
+            const cities = [...new Set(participants.map(user => user.city || "לא צוין"))].sort((a,b) => a.localeCompare(b, 'he'));
             elements.cityFilter.innerHTML = '<option value="">כל הערים</option>';
-            cities.forEach(city => elements.cityFilter.innerHTML += `<option value="${city}">${city}</option>`);
+            cities.forEach(city => {
+                if (city) {
+                    elements.cityFilter.innerHTML += `<option value="${city}">${city}</option>`;
+                }
+            });
         }
         
+        let currentMarkers = [];
         function renderMarkers(list) {
-            if (markerClusterer) markerClusterer.clearMarkers();
+            currentMarkers.forEach(marker => marker.setMap(null));
+            currentMarkers = [];
             
-            const currentMarkers = list.map(p => {
-                const marker = new google.maps.Marker({ position: { lat: p.lat, lng: p.lon }});
-                marker.addListener('click', () => {
-                    const content = `<div style="padding: 10px; text-align: right;"><h4>${p.name}</h4><p>${p.city}</p></div>`;
-                    infoWindow.setContent(content);
-                    infoWindow.open(map, marker);
-                });
-                return marker;
+            list.forEach(p => {
+                if (p.lat && p.lon) {
+                    const marker = new google.maps.Marker({ position: { lat: p.lat, lng: p.lon }, map: map });
+                    marker.addListener('click', () => {
+                        const content = `<div class="popup-box"><h4>${p.name}</h4><p>${p.city}</p></div>`;
+                        infoWindow.setContent(content);
+                        infoWindow.open({
+                            anchor: marker,
+                            map,
+                        });
+                    });
+                    currentMarkers.push(marker);
+                }
             });
-            
-            markerClusterer = new MarkerClusterer({ map, markers: currentMarkers });
             elements.participantCount.textContent = `${list.length} משתתפים`;
         }
+        checkAccess();
     </script>
-    <!-- The Google Maps script will be loaded dynamically by the module if needed -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9Dtp32sofmjDfI3aP3lXskTxRUcF9_Cg"></script>
 </body>
 </html>
