@@ -753,13 +753,14 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
-    <!-- Firebase SDKs - Removed for now, will be re-added carefully -->
+    <!-- MAIN APPLICATION SCRIPT -->
     <script>
         // 🚀 מערכת ניהול נתונים מתקדמת - מאיה משלחת לאוגנדה 2025
         console.log("🚀 מתחיל אתחול אפליקציית מאיה מתקדמת...");
 
-        // נתונים בסיסיים - 35 משתמשים לדוגמה (שולפו מהקוד המקורי שלך)
+        // Global participants array
         let participants = [
+            // Sample data (will be replaced by localStorage or Google Sheet data)
             {name: 'נועה בר', city: 'תל אביב', lat: 32.0853, lon: 34.7818, phone: '0501111111', whatsapp: '0501111111'},
             {name: 'דוד לוי', city: 'חיפה', lat: 32.7940, lon: 34.9896, phone: '0522222222', whatsapp: '0522222222'},
             {name: 'רוני ישראלי', city: 'ירושלים', lat: 31.7683, lon: 35.2137, phone: '0533333333', whatsapp: '0533333333'},
@@ -800,7 +801,7 @@
 
         let admin = false;
         const adminPassword = "1234";
-        let editParticipantId = null; // Changed from editIdx to store Firestore doc ID
+        let editParticipantIndex = null; // Used for local array index (since Firestore is out)
 
         // מערכת אחסון מתקדמת - localStorage
         const StorageManager = {
@@ -904,7 +905,7 @@
             popupAnchor: [0, -36]
         });
 
-        // אלמנטים
+        // אלמנטים (const-ים גלובליים)
         const adminModal = document.getElementById('admin-login-modal');
         const userModal = document.getElementById('user-form-modal');
         const addBtn = document.getElementById('add-user-btn');
@@ -914,7 +915,7 @@
         const fileInput = document.getElementById('file-input');
         const cityFilter = document.getElementById('city-filter'); 
 
-        // פונקציות עזר - הועברו לסקופ גלובלי או לאובייקטים מתאימים
+        // פונקציות עזר (גלובליות)
         function distance(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -938,7 +939,7 @@
                 throw new Error('לא נמצא מיקום לעיר שהוזנה');
             } catch (error) {
                 console.error(`❌ שגיאה בחיפוש מיקום עבור ${city}:`, error);
-                ToastManager.show('שגיאה בחיפוש מיקום העיר: ' + error.message, 'error'); // שימוש ב-ToastManager
+                ToastManager.show('שגיאה בחיפוש מיקום העיר: ' + error.message, 'error');
                 throw new Error('שגיאה בחיפוש מיקום העיר');
             }
         }
@@ -955,21 +956,6 @@
             cities.forEach(city => cityFilter.innerHTML += `<option value="${city}">${city}</option>`); 
             cityFilter.value = cities.includes(currentCity) ? currentCity : ""; 
         }
-
-        function applyFilters() { 
-            const searchTerm = searchInput.value.trim().toLowerCase(); 
-            const selectedCity = cityFilter.value; 
-            let filtered = window.participants; 
-            if (selectedCity) filtered = filtered.filter(p => p.city === selectedCity); 
-            if (searchTerm) filtered = filtered.filter(p =>
-                p.name.toLowerCase().includes(searchTerm) || 
-                p.city.toLowerCase().includes(searchTerm) || 
-                p.phone.includes(searchTerm)
-            ); 
-            renderMarkers(filtered); 
-        }
-
-        let markers = L.markerClusterGroup(); 
 
         function renderMarkers(list = window.participants) {
             console.log("🗺️ מציג סמנים על המפה באמצעות MarkerClusterer...");
@@ -1000,15 +986,12 @@
                                         </a>`;
                 }
 
-                // In this "No-Firebase" version, `p.id` won't be from Firestore.
-                // We'll use a placeholder or simply not pass ID for local operations if not needed.
-                // For now, removing `p.id` from `onclick` calls to prevent errors if not set.
-                // When Firestore is re-integrated, `p.id` will be correctly passed.
+                // editUser and deleteUser now use index of participant in array (for local operations)
                 const adminButtons = admin ? `
-                    <button class="popup-btn edit" onclick="editUser(participants.indexOf(p))">
+                    <button class="popup-btn edit" onclick="editUser(window.participants.indexOf(p))">
                         <span class="material-symbols-outlined">edit</span>ערוך
                     </button>
-                    <button class="popup-btn delete" onclick="deleteUser(participants.indexOf(p), '${p.name}')">
+                    <button class="popup-btn delete" onclick="deleteUser(window.participants.indexOf(p), '${p.name}')">
                         <span class="material-symbols-outlined">delete</span>מחק
                     </button>
                 ` : '';
@@ -1052,8 +1035,7 @@
         }
 
         // פונקציות גלובליות לשימוש בפופאפ
-        // Updated editUser/deleteUser for local operations (no Firestore ID)
-        window.editUser = function(idx) { // Now accepts index, not Firestore ID
+        window.editUser = function(idx) { // Accepts index for local array operation
             return AdminGuard.requireAdmin(() => {
                 const p = window.participants[idx];
                 if (!p) {
@@ -1061,7 +1043,7 @@
                     return;
                 }
                 console.log(`✏️ עריכת משתמש: ${p.name}`);
-                editParticipantId = idx; // Store index for local array update
+                editParticipantIndex = idx; // Store index for local array update
                 document.getElementById('user-form-title').innerText = '✏️ עריכת משתתף';
                 document.getElementById('user-name').value = p.name;
                 document.getElementById('user-city').value = p.city;
@@ -1071,18 +1053,16 @@
             });
         };
 
-        window.deleteUser = function(idx, name) { // Now accepts index, not Firestore ID
+        window.deleteUser = function(idx, name) { // Accepts index for local array operation
             return AdminGuard.requireAdmin(() => {
                 ToastManager.show(`האם אתה בטוח שברצונך למחוק את ${name}? (הפעולה תבוצע מקומית)`, 'warning');
-                // Simulate deletion for UI, actual deletion requires server-side Google Apps Script integration
                 window.participants.splice(idx, 1);
-                StorageManager.save(); // Save changes to local storage
-                renderMarkers(); // Re-render map
-                updateParticipantCount(); // Update count
+                StorageManager.save(); 
+                renderMarkers(); 
+                updateParticipantCount(); 
                 ToastManager.show(`${name} נמחק בהצלחה (מקומי)`);
             });
         };
-
 
         window.suggestCarpool = function(name, phone) {
             console.log(`🚗 הצעת נסיעה משותפת ל: ${name}`);
