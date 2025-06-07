@@ -10,26 +10,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <link rel="stylesheet" href="./style.css">
-    <style>
-        .logo-maya {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-            background: white;
-            padding: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .logo-maya img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-        }
-    </style>
 </head>
 <body>
     <div id="app-container">
@@ -51,6 +31,9 @@
             <div class="subtitle">מחברים בין חברים</div>
         </header>
 
+        <button id="trivia-btn" hidden>טריוויה מאוגנדה</button>
+        <div id="trivia-box" hidden></div>
+
         <div class="search-container">
             <div class="search-box">
                 <span class="material-symbols-outlined search-icon">search</span>
@@ -67,16 +50,25 @@
                 <span class="material-symbols-outlined">download</span>
                 יצוא ל-Excel
             </button>
+            <button id="sync-btn" class="admin-control-btn">
+                <span class="material-symbols-outlined">sync</span>
+                סנכרון מהגיליון
+            </button>
         </div>
 
         <div class="map-container">
             <div id="map"></div>
             <div class="participant-count">
-                <span id="participant-count">טוען...</span>
+                <span id="participant-count">טוען נתונים מגוגל שיטס...</span>
             </div>
             <button id="add-user-btn" class="fab add-fab" style="display: none;" title="הוסף משתמש">
                 <span class="material-symbols-outlined">add</span>
             </button>
+        </div>
+
+        <div id="sync-status" class="sync-status">
+            <span class="material-symbols-outlined sync-icon">cloud_sync</span>
+            <span id="sync-text">מתחבר לגוגל שיטס...</span>
         </div>
     </div>
 
@@ -105,7 +97,10 @@
         <div class="modal-content">
             <h3 id="user-form-title">➕ הוסף משתתף</h3>
             <div class="form-group">
-                <input type="text" class="form-input" placeholder="שם מלא" id="user-name">
+                <input type="text" class="form-input" placeholder="שם פרטי" id="user-first-name">
+            </div>
+            <div class="form-group">
+                <input type="text" class="form-input" placeholder="שם משפחה" id="user-last-name">
             </div>
             <div class="form-group">
                 <input type="text" class="form-input" placeholder="עיר" id="user-city">
