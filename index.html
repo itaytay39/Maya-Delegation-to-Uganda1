@@ -7,6 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     
     <style>
         /* style.css content - Original styles from user's provided file */
@@ -81,9 +84,11 @@
             transform: scale(1.05);
         }
 
-        .logo-maya svg {
+        .logo-maya img {
             width: 100%;
             height: 100%;
+            object-fit: contain;
+            display: block;
         }
 
         .admin-fab {
@@ -642,7 +647,7 @@
             
             <div class="logo-container">
                 <div class="logo-maya">
-                    <img src="logo.jpg" alt="מאיה משלחת לאוגנדה" onerror="this.src='https://placehold.co/140x140/FFFFFF/A0B939?text=Logo'">
+                    <img src="https://itaytay39.github.io/Maya-Delegation-to-Uganda1/logo.jpg" alt="מאיה משלחת לאוגנדה" onerror="this.src='https://placehold.co/140x140/FFFFFF/A0B939?text=Logo'">
                 </div>
             </div>
             <div class="title">מאיה - משלחת לאוגנדה</div>
@@ -678,7 +683,7 @@
             <button id="add-user-btn" class="fab add-fab" style="display: none;" title="הוסף משתמש">
                 <span class="material-symbols-outlined">add</span>
             </button>
-            <!-- New FAB for resetting map view - added by Gemini, adjusted for Leaflet -->
+            <!-- New FAB for resetting map view -->
             <button id="reset-view-fab" class="fab reset-view-fab" title="מרכז מפה">
                 <span class="material-symbols-outlined">explore</span>
             </button>
@@ -741,17 +746,14 @@
     <div id="toast-container" class="toast-container"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Leaflet MarkerCluster JS - added by Gemini -->
+    <!-- Leaflet MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
     <script>
-        // script.js content - Original script from user's provided file
-        // 🚀 מערכת ניהול נתונים מתקדמת - מאיה משלחת לאוגנדה 2025
-        console.log("🚀 מתחיל אתחול אפליקציית מאיה מתקדמת...");
-
-        // נתונים בסיסיים - 35 משתמשים לדוגמה
+        // Ensure all global variables and functions are declared at the top scope
         let participants = [
+            // Original sample data
             {name: 'נועה בר', city: 'תל אביב', lat: 32.0853, lon: 34.7818, phone: '0501111111', whatsapp: '0501111111'},
             {name: 'דוד לוי', city: 'חיפה', lat: 32.7940, lon: 34.9896, phone: '0522222222', whatsapp: '0522222222'},
             {name: 'רוני ישראלי', city: 'ירושלים', lat: 31.7683, lon: 35.2137, phone: '0533333333', whatsapp: '0533333333'},
@@ -788,10 +790,11 @@
             {name: 'עידו פלג', city: 'קריית מלאכי', lat: 31.7303, lon: 34.7453, phone: '0500000025', whatsapp: '0500000025'},
             {name: 'רונית שפיר', city: 'קריית ביאליק', lat: 32.8298, lon: 35.0889, phone: '0500000026', whatsapp: '0500000026'}
         ];
+        window.participants = participants; // Make participants array globally accessible
 
         let admin = false;
         const adminPassword = "1234";
-        let editIdx = null; // Changed from editParticipantId back to editIdx for local array
+        let editIdx = null; // Original edit index for local array operations
 
         // מערכת אחסון מתקדמת - localStorage
         const StorageManager = {
@@ -814,7 +817,7 @@
                         const savedData = JSON.parse(saved);
                         if (savedData.length > 0) {
                             participants = savedData;
-                            console.log(`� נטענו ${participants.length} משתתפים מ-localStorage`);
+                            console.log(`📂 נטענו ${participants.length} משתתפים מ-localStorage`);
                             console.log(`📅 עדכון אחרון: ${lastUpdate}`);
                             return true;
                         }
@@ -905,7 +908,7 @@
         const fileInput = document.getElementById('file-input');
         const cityFilter = document.getElementById('city-filter');
 
-        // פונקציות עזר
+        // פונקציות עזר (גלובליות)
         function distance(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -934,20 +937,114 @@
             }
         }
 
-        // עדכון מספר משתתפים
         function updateParticipantCount() {
             participantCount.textContent = `${participants.length} משתתפים`;
             console.log(`📊 עודכן מספר משתתפים: ${participants.length}`);
         }
 
-        // הוספת סמנים למפה
+        // --- Start of Google Sheets Sync object (as per original script.js) ---
+        const SHEET_CONFIG = { participantsUrl: 'https://docs.google.com/spreadsheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv', syncInterval: 60000 };
+        let syncTimer = null; // Defined here for global accessibility
+
+        const GoogleSheetsSync = {
+            async loadData(isManual = false) {
+                const url = `${SHEET_CONFIG.participantsUrl}&t=${new Date().getTime()}`;
+                if(document.getElementById('sync-btn')?.querySelector('.material-symbols-outlined')) {
+                    document.getElementById('sync-btn').querySelector('.material-symbols-outlined').style.animation = 'spin 1s linear infinite';
+                }
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+                    const csvText = await response.text();
+                    const rows = this.parseCSV(csvText);
+                    if (rows.length < 2) throw new Error('No data or only headers in sheet');
+                    
+                    const headers = rows[0].map(h => h.trim()); 
+                    const fetchedParticipants = rows.slice(1).map(row => {
+                        const obj = {}; 
+                        headers.forEach((h, i) => obj[h] = row[i] || '');
+                        
+                        const lat = parseFloat(obj['Lat']);
+                        const lon = parseFloat(obj['Lon']);
+
+                        return { 
+                            name: `${obj['שם פרטי'] || ''} ${obj['שם משפחה'] || ''}`.trim(), 
+                            firstName: obj['שם פרטי'] || '', 
+                            lastName: obj['שם משפחה'] || '', 
+                            city: obj['עיר'] || 'לא צוין', 
+                            lat: isNaN(lat) ? null : lat, 
+                            lon: isNaN(lon) ? null : lon, 
+                            phone: this.formatPhone(obj['מספר טלפון']), 
+                            whatsapp: this.formatPhone(obj['מספר ווצאפ'] || obj['מספר WhatsApp'])
+                        };
+                    }).filter(p => p.name && p.lat !== null && p.lon !== null); 
+
+                    window.participants = fetchedParticipants; 
+                    StorageManager.save(); 
+                    if (isManual) ToastManager.show(`סונכרנו ${window.participants.length} משתתפים מגיליון גוגל.`, 'success');
+                    populateCityFilter(); // Global function
+                    renderMarkers(); // Global function
+                    updateParticipantCount(); // Global function
+                    
+                } catch (error) {
+                    console.error("❌ Data load error from Google Sheet:", error);
+                    ToastManager.show(`שגיאה בטעינת נתונים מגיליון גוגל: ${error.message}`, 'error');
+                    throw error; 
+                } finally {
+                     if(document.getElementById('sync-btn')?.querySelector('.material-symbols-outlined')) {
+                         document.getElementById('sync-btn').querySelector('.material-symbols-outlined').style.animation = '';
+                     }
+                }
+            },
+            parseCSV(csvText) {
+                const lines = csvText.split(/\r\n|\n/).filter(line => line.trim() !== ''); 
+                return lines.map(line => {
+                    const result = []; let current = ''; let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i]; const nextChar = line[i+1];
+                        if (char === '"' && inQuotes && nextChar === '"') { current += '"'; i++; } 
+                        else if (char === '"') { inQuotes = !inQuotes; } 
+                        else if (char === ',' && !inQuotes) { result.push(current.trim().replace(/^"|"$/g, '')); current = ''; } 
+                        else { current += char; }
+                    }
+                    result.push(current.trim().replace(/^"|"$/g, ''));
+                    return result;
+                });
+            },
+            formatPhone(phone) { 
+                if (!phone) return ''; 
+                const cleaned = phone.replace(/\D/g, ''); 
+                if (cleaned.startsWith('0')) {
+                    return cleaned;
+                } else if (cleaned.startsWith('972')) {
+                    return '0' + cleaned.substring(3); 
+                }
+                return '0' + cleaned.slice(-9); 
+            },
+            updateUI() { populateCityFilter(); renderMarkers(); updateParticipantCount(); }, 
+            startAutoSync() { this.stopAutoSync(); syncTimer = setInterval(() => this.loadData(false), SHEET_CONFIG.syncInterval); }, // Uses global syncTimer
+            stopAutoSync() { if (syncTimer) clearInterval(syncTimer); } // Uses global syncTimer
+        };
+        // --- End of Google Sheets Sync object ---
+
+
+        function populateCityFilter() { 
+            const cities = [...new Set(participants.map(user => user.city))].sort((a,b) => a.localeCompare(b, 'he')); 
+            const currentCity = cityFilter.value; 
+            cityFilter.innerHTML = '<option value="">כל הערים</option>'; 
+            cities.forEach(city => cityFilter.innerHTML += `<option value="${city}">${city}</option>`); 
+            cityFilter.value = cities.includes(currentCity) ? currentCity : ""; 
+        }
+
         function renderMarkers(list = participants) {
             console.log("🗺️ מציג סמנים על המפה...");
             
-            map.eachLayer(layer => {
-                if (layer instanceof L.Marker) map.removeLayer(layer);
-            });
-            
+            // Re-initialize markers group for each renderMarkers call
+            if (markers) {
+                map.removeLayer(markers);
+            }
+            markers = L.markerClusterGroup(); // Initialize MarkerClusterGroup here
+
             list.forEach((p, idx) => {
                 const whatsappNum = (p.whatsapp && p.whatsapp.length > 0) ? p.whatsapp : p.phone;
                 const hasWhatsapp = whatsappNum && whatsappNum.length >= 9;
@@ -1008,14 +1105,18 @@
                     </div>
                 `;
                 
-                const marker = L.marker([p.lat, p.lon], {icon: modernMarkerIcon}).addTo(map);
+                const marker = L.marker([p.lat, p.lon], {icon: modernMarkerIcon});
                 marker.bindPopup(popup, {closeButton: true, maxWidth: 350});
+                markers.addLayer(marker); // Add to MarkerClusterGroup
             });
+            
+            map.addLayer(markers); // Add the MarkerClusterGroup to map
             
             console.log(`✅ הוצגו ${list.length} סמנים על המפה`);
         }
 
-        // פונקציות גלובליות לשימוש בפופאפ
+
+        // פונקציות גלובליות לשימוש בפופאפ (Original local operations)
         window.editUser = function(idx) {
             return AdminGuard.requireAdmin(() => {
                 console.log(`✏️ עריכת משתמש: ${participants[idx].name}`);
@@ -1357,4 +1458,3 @@
     </script>
 </body>
 </html>
-�
