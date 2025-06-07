@@ -42,15 +42,48 @@
         #app-container { display: none; }
         #app-container.visible { display: flex; }
 
-        .header { background: var(--md-sys-surface); padding: 1rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid var(--md-sys-surface-variant); flex-shrink: 0; }
-        .logo-maya { width: 48px; height: 48px; border-radius: 50%; }
-        .header-title { font-size: 1.25rem; font-weight: 600; }
+        /* --- Updated Header Styling --- */
+        .header {
+            /* Changed to a lighter, more Google-like gradient */
+            background: linear-gradient(135deg, #e0e7ff 0%, #c3daff 100%); /* Light blue/purple gradient */
+            padding: 1.5rem 1rem; /* Increased padding */
+            display: flex;
+            flex-direction: column; /* Stack logo, title, slogan vertically */
+            align-items: center; /* Center items horizontally */
+            justify-content: center; /* Center items vertically if needed */
+            color: #49454F; /* Darker text color for contrast on light background */
+            border-bottom: none; /* Removed border */
+            flex-shrink: 0;
+            text-align: center; /* Ensure text is centered */
+        }
+        .logo-maya {
+            width: 90px; /* Further increased logo size */
+            height: 90px; /* Further increased logo size */
+            border-radius: 50%;
+            margin-bottom: 0.75rem; /* Space between logo and title */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Added subtle shadow */
+            background-color: white; /* Ensure white background for logo */
+            padding: 5px; /* Small padding around the image inside the circle */
+            object-fit: contain; /* Ensure the image fits within the circle */
+        }
+        .header-title {
+            font-size: 1.75rem; /* Larger title */
+            font-weight: 700; /* Bolder title */
+            margin-bottom: 0.25rem; /* Space between title and slogan */
+            color: var(--md-sys-on-surface); /* Ensure good contrast */
+        }
+        .header-slogan {
+            font-size: 1rem; /* Slogan font size */
+            font-weight: 400; /* Normal weight */
+            color: var(--md-sys-on-surface-variant); /* Adjusted slogan color for contrast */
+        }
+
         .filters-container { padding: 0.5rem 1rem 1rem; background: var(--md-sys-surface); display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; flex-shrink: 0; }
         .input-container { display: flex; align-items: center; gap: 0.5rem; background: var(--md-sys-surface-variant); border-radius: var(--md-sys-shape-xl); padding: 0.5rem 1rem; }
         .input-container .material-symbols-outlined { color: var(--md-sys-on-surface-variant); }
         .search-input, #city-filter { width: 100%; border: none; outline: none; font-size: 1rem; background: transparent; appearance: none; color: var(--md-sys-on-surface-variant); }
         .map-container { flex-grow: 1; position: relative; }
-        #map { height: 100%; width: 100%; background: #f0f0f0; }
+        #map { height: 100%; width: 100%; background: #f0f0f0; display: flex; align-items: center; justify-content: center;} /* Added flex properties for centering error message */
         .participant-count { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.9); padding: 0.5rem 1rem; border-radius: 12px; z-index: 1; font-size: 0.875rem; }
         .gm-style-iw-d { overflow: hidden !important; } .gm-style-iw-c { padding: 0 !important; border-radius: 16px !important; }
         .popup-box { padding: 1rem; text-align: center; max-width: 280px; }
@@ -73,8 +106,12 @@
 
     <div id="app-container">
         <header class="header">
+            <!-- לוגו מאיה - מותאם למראה החדש -->
             <img class="logo-maya" src="https://itaytay39.github.io/Maya-Delegation-to-Uganda1/logo.jpg" alt="לוגו מאיה" onerror="this.style.display='none'">
-            <h1 class="header-title">מפת המשלחת</h1>
+            <!-- כותרת ראשית -->
+            <h1 class="header-title">מאיה - משלחת לאוגנדה</h1>
+            <!-- סלוגן - נוסף בהתאם לבקשתך -->
+            <p class="header-slogan">מחברים בין חברים</p>
         </header>
         <div class="filters-container">
             <div class="input-container"><span class="material-symbols-outlined">location_city</span><select id="city-filter"><option value="">כל הערים</option></select></div>
@@ -92,9 +129,18 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // הגדרות Firebase: משתמשים במשתנים גלובליים המסופקים על ידי סביבת הקנבס
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // הגדרות Firebase: כעת נשתמש במפתח ה-API שהוזן ישירות על ידי המשתמש
+        // ודא שמפתח ה-API שהעתקת מ-Google Cloud Console מודבק כאן במקום 'YOUR_API_KEY_HERE'.
+        // וודא שגם 'projectId' הוא מזהה הפרויקט הנכון שלך (maya-delegation-map).
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // עדיין משתמשים ב-appId מהסביבה
+        const firebaseConfig = {
+          apiKey: "AIzaSyCEo0QBID_qOEivVCmbcg8Z_YYY4cIjwj0", // מפתח ה-API שעודכן על ידך
+          authDomain: "maya-delegation-map.firebaseapp.com", // ודא שזהו הדומיין הנכון של הפרויקט החדש
+          projectId: "maya-delegation-map", // ודא שזהו מזהה הפרויקט החדש שלך
+          storageBucket: "maya-delegation-map.appspot.com",
+          messagingSenderId: "543677265577", // ייתכן שיצטרך להתעדכן לפי הפרויקט החדש
+          appId: "1:543677265577:web:7c8f122ed21f6c5aaadbb8" // ייתכן שיצטרך להתעדכן לפי הפרויקט החדש
+        };
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -156,13 +202,9 @@
         
         function handleAuthError(error) {
              console.error("Authentication failed:", error);
-             // במקרה של כשל אימות, נציג הודעה פשוטה במקום מסך הגישה החסומה
-             // חשוב: הימנע מ-alert() בפועל. זו רק הדגמה לצורך דיבוג.
-             // במערכת אמיתית תשתמש במנגנון UI מותאם אישית.
-             // alert("שגיאה באימות Firebase. ייתכן שנתוני המפה לא יוצגו.");
+             // במקרה של כשל אימות, נציג הודעה בקונסול.
              console.warn("שגיאה באימות Firebase. נתוני המפה עשויים לא להיטען עקב הרשאות.");
-             // נמשיך לנסות לטעון את המפה, אך יכול להיות שנתונים לא יופיעו
-             // (אם כי ללא אימות תקין, קריאות Firestore ייכשלו)
+             // נמשיך לנסות לטעון את המפה, אך קריאות Firestore ייכשלו ללא אימות תקין.
              initMapAndLogic();
         }
 
@@ -190,46 +232,83 @@
                 applyFilters();
             } catch (error) {
                 console.error("Firestore Error:", error);
-                // במקום alert, אפשר להציג הודעה ב-UI למשתמש
-                // alert("שגיאה בטעינת נתוני הקבוצה. ודא שיש חיבור אינטרנט ושהנתונים קיימים.");
-                console.error("שגיאה בטעינת נתוני הקבוצה מ-Firestore. ודא הרשאות וחיבור אינטרנט.");
+                // במקרה של שגיאה בטעינת נתונים, נציג הודעה ב-UI למשתמש
+                elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
+                    <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה בטעינת נתוני הקבוצה</h1>
+                    <p style="font-size: 1rem;">נא לוודא שיש חיבור אינטרנט ושהרשאות הגישה ל-Firestore מוגדרות כראוי עבור המשתמש הנוכחי. (ראה קונסולת מפתחים לפרטים)</p>
+                </div>`;
             }
         }
 
         async function initMapAndLogic() {
-            // טעינה דינמית של ספריית Google Maps API
-            // מסתמכים על כך שסביבת הקנבס תספק את המפתח למפות Google באופן אוטומטי
-            // או שהוא מוגדר בפרויקט Firebase המשויך ל-appId.
-            // הסרנו את הטעינה המפורשת של הסקריפט עם מפתח, כיוון שזה עלול לגרום ל-ApiTargetBlockedMapError.
+            // שגיאת 'ApiTargetBlockedMapError' מצביעה לרוב על כך שמפתח ה-API
+            // אינו מוגדר כראוי עבור Google Maps JavaScript API בחשבון Google Cloud,
+            // או שיש לו הגבלות HTTP referrer שחוסמות את הדומיין הנוכחי.
+            // הקוד כאן מוודא שהסקריפט נטען עם המפתח המצוין ב-firebaseConfig.
+            
+            // בודק אם ספריית google.maps כבר נטענה
             if (typeof google === 'undefined' || typeof google.maps === 'undefined' || typeof google.maps.importLibrary === 'undefined') {
-                console.warn("Google Maps API is not loaded yet. Waiting...");
-                // ניתן להוסיף כאן לוגיקה לטעינה ידנית אם עדיין לא נטען,
-                // אך לצורך הדיבוג, נניח שהוא יטען על ידי הסביבה.
-                // במצב אמיתי, ייתכן שיהיה צורך לטעון אותו עם מפתח מתאים או להשתמש בדרך אחרת.
-                 const script = document.createElement('script');
-                 script.src = `https://maps.googleapis.com/maps/api/js?key=${firebaseConfig.apiKey}`; // נחזיר את מפתח ה-API
-                 script.async = true;
-                 script.defer = true;
-                 document.head.appendChild(script);
+                console.warn("Google Maps API is not loaded yet. Attempting to load dynamically...");
+                const script = document.createElement('script');
+                // שימוש במפתח ה-API מ-firebaseConfig
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${firebaseConfig.apiKey}&libraries=maps`; // הוספת libraries=maps
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
 
-                 await new Promise((resolve, reject) => {
-                     script.onload = resolve;
-                     script.onerror = () => {
-                         console.error("Failed to load Google Maps script. Check API key restrictions.");
-                         reject(new Error("Failed to load Google Maps script."));
-                     };
-                 });
+                try {
+                    await new Promise((resolve, reject) => {
+                        script.onload = () => {
+                            // ודא ש-google.maps.importLibrary זמין לפני ה-resolve
+                            if (typeof google !== 'undefined' && typeof google.maps !== 'undefined' && typeof google.maps.importLibrary === 'function') {
+                                resolve();
+                            } else {
+                                reject(new Error("Google Maps script loaded, but importLibrary is not available."));
+                            }
+                        };
+                        script.onerror = () => {
+                            console.error("Failed to load Google Maps script. This often means the API key is invalid or not enabled for Google Maps JavaScript API.");
+                            reject(new Error("Failed to load Google Maps script."));
+                        };
+                    });
+                    console.log("Google Maps script loaded successfully.");
+                } catch (error) {
+                    console.error("Error during Google Maps script loading:", error);
+                    // אם הסקריפט לא נטען, אין טעם להמשיך עם מפות Google
+                    elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
+                        <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה בטעינת ספריית המפות</h1>
+                        <p style="font-size: 1rem;">ייתכן שמפתח ה-API של Google Maps אינו תקין או שאינו מוגדר כראוי בחשבון Google Cloud.</p>
+                        <p style="font-size: 0.8rem;">אנא בדוק את <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud</a> עבור הגבלות מפתח API (HTTP referrers) ואפשר את "Maps JavaScript API".</p>
+                    </div>`;
+                    return; 
+                }
+            } else {
+                console.log("Google Maps API already loaded.");
             }
             
-            const { Map, InfoWindow } = await google.maps.importLibrary("maps");
-            infoWindow = new InfoWindow();
-            
-            map = new Map(elements.mapDiv, {
-                center: { lat: 31.5, lng: 34.75 }, // מיקום התחלתי: מרכז ישראל בערך
-                zoom: 8, // רמת זום התחלתית
-                disableDefaultUI: true, // הסתרת פקדי UI ברירת מחדל
-                zoomControl: true // הצגת פקד זום בלבד
-            });
+            try {
+                // נמשיך לנסות לטעון את ספריית "maps" גם אם היא כבר נטענה דרך הסקריפט, כדי לוודא שכל הפונקציות זמינות.
+                const { Map, InfoWindow } = await google.maps.importLibrary("maps");
+                infoWindow = new InfoWindow();
+                
+                map = new Map(elements.mapDiv, {
+                    center: { lat: 31.5, lng: 34.75 }, // מיקום התחלתי: מרכז ישראל בערך
+                    zoom: 8, // רמת זום התחלתית
+                    disableDefaultUI: true, // הסתרת פקדי UI ברירת מחדל
+                    zoomControl: true // הצגת פקד זום בלבד
+                });
+                console.log("Google Map initialized.");
+            } catch (error) {
+                console.error("Error initializing Google Map. This might be due to API key restrictions or other configuration issues:", error);
+                // הצגת הודעה ב-UI למשתמש אם המפה לא מצליחה להיטען
+                elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
+                    <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה באתחול המפה</h1>
+                    <p style="font-size: 1rem;">נא לוודא שמפתח ה-API של Google Maps תקין ומוגדר כראוי עבור דומיין זה.</p>
+                    <p style="font-size: 0.8rem;">אנא בדוק את <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud</a> עבור הגבלות מפתח API.</p>
+                </div>`;
+                return; // יציאה מהפונקציה אם המפה לא נטענה
+            }
+
 
             // אירועים לפילטרים
             elements.searchInput.addEventListener('input', applyFilters);
@@ -262,7 +341,7 @@
             elements.cityFilter.innerHTML = '<option value="">כל הערים</option>';
             cities.forEach(city => {
                 if (city) {
-                    elements.cityFilter.innerHTML += `<option value="${city}">${city}</option>`;
+                    elements.cityFilter.innerHTML += `<option value="${city}">${city.charAt(0).toUpperCase() + city.slice(1)}</option>`; // Capitalize first letter for display
                 }
             });
         }
