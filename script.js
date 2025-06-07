@@ -6,7 +6,8 @@ const SHEET_CONFIG = {
     spreadsheetId: '1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg',
     participantsUrl: 'https://docs.google.com/spreadsheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv',
     triviaUrl: 'https://docs.google.com/spreadsheets/d/1zunKbBVc74mtXfXkHjMDvQSpbu9n2PSasrxQ1CsRmvg/gviz/tq?tqx=out:csv&sheet=טריוויה',
-    syncInterval: 30000 // סנכרון כל 30 שניות
+    syncInterval: 30000, // סנכרון כל 30 שניות
+    appsScriptUrl: 'https://script.google.com/macros/s/AKfycbz1DrYpMY8F7awe-BuveOR_i8iwSiAHF7dRTgbh1j91beIyRy9GcIHcjhEeK3VIdlj31Q/exec' // ה-URL החדש שקיבלת
 };
 
 // משתנים גלובליים
@@ -378,10 +379,31 @@ window.deleteUser = function(idx) {
     const user = participants[idx];
     if (confirm(`האם אתה בטוח שברצונך למחוק את ${user.name}?`)) {
         console.log(`🗑️ מוחק משתמש: ${user.name}`);
-        participants.splice(idx, 1);
-        renderMarkers();
-        updateParticipantCount();
-        ToastManager.show(`${user.name} נמחק בהצלחה`);
+
+        const deletePayload = { id: user.name }; // או ID ייחודי אחר
+        
+        // שליחת בקשת מחיקה ל-Apps Script
+        fetch(SHEET_CONFIG.appsScriptUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded' // Apps Script מצפה לפורמט זה
+            },
+            body: JSON.stringify({ action: 'delete', payload: deletePayload })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                ToastManager.show(`${user.name} נמחק בהצלחה`);
+                // טען מחדש את הנתונים כדי שהמפה תתעדכן
+                GoogleSheetsSync.loadParticipants();
+            } else {
+                ToastManager.show(`שגיאה במחיקה: ${result.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error("❌ שגיאה במחיקת משתמש:", error);
+            ToastManager.show('שגיאה במחיקת נתונים. נסה שוב.', 'error');
+        });
     }
 };
 
@@ -546,30 +568,63 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const fullName = `${firstName} ${lastName}`;
         
-        // במצב רגיל נוסיף למערך המקומי
-        // באפליקציה אמיתית נשלח לשרת או נעדכן את הגיליון
-        const newUser = {
-            firstName,
-            lastName,
-            name: fullName,
-            city,
-            lat: 32.0 + Math.random() * 1.5, // קואורדינטות זמניות
-            lon: 34.5 + Math.random() * 1.0,
-            phone,
-            whatsapp
+        // נתוני המשתמש שישלחו ל-Apps Script, מותאמים לכותרות הגיליון
+        const userData = {
+            'שם פרטי': firstName,
+            'שם משפחה': lastName,
+            'עיר': city,
+            'מספר טלפון': phone,
+            'מספר ווצאפ': whatsapp,
+            // Lat ו-Lon לא נשלחים ישירות מכאן כי האפליקציה לא עושה גאוקודינג בצד הלקוח.
+            // הם נטענים מהגיליון. אם תרצה לעדכן אותם, תצטרך לכלול לוגיקת גאוקודינג כאן
+            // או ב-Apps Script.
+            'Lat': (editIdx !== null) ? participants[editIdx].lat : null, // שמירה על קואורדינטות קיימות בעריכה
+            'Lon': (editIdx !== null) ? participants[editIdx].lon : null,
         };
-        
+
+        // קבע את הפעולה
+        let action = 'add';
         if (editIdx !== null) {
-            participants[editIdx] = newUser;
-            ToastManager.show(`${fullName} עודכן בהצלחה!`);
-        } else {
-            participants.push(newUser);
-            ToastManager.show(`${fullName} נוסף בהצלחה!`);
+            action = 'update';
+            // עבור עדכון, ה-Apps Script מזהה לפי שם פרטי ושם משפחה (בדוגמה שלנו)
+            // עדיף להעביר ID ייחודי מהאפליקציה ל-Apps Script אם קיים.
         }
-        
-        document.getElementById('user-form-modal').hidden = true;
-        renderMarkers();
-        updateParticipantCount();
+
+        try {
+            const saveBtn = document.getElementById('user-save');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="material-symbols-outlined">autorenew</span> שומר...';
+
+            // שלח נתונים ל-Google Apps Script
+            const response = await fetch(SHEET_CONFIG.appsScriptUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8' // Apps Script מצפה לפורמט זה
+                },
+                body: JSON.stringify({ action, payload: userData }) //
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                ToastManager.show(`${fullName} ${action === 'add' ? 'נוסף' : 'עודכן'} בהצלחה!`);
+                // לאחר שמירה מוצלחת, טען מחדש את הנתונים מהגיליון
+                // כדי שהמפה תתעדכן עם הנתונים העדכניים (כולל Lat/Lon אם הם נטענים מחדש)
+                await GoogleSheetsSync.loadParticipants(); 
+            } else {
+                ToastManager.show(`שגיאה בשמירה: ${result.message}`, 'error');
+            }
+            
+            document.getElementById('user-form-modal').hidden = true;
+            editIdx = null; // איפוס
+        } catch (err) {
+            console.error("❌ שגיאה בשמירת משתמש:", err);
+            ToastManager.show('שגיאה בשמירת נתונים. נסה שוב.', 'error');
+        } finally {
+            const saveBtn = document.getElementById('user-save');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<span class="material-symbols-outlined">save</span> שמירה';
+        }
     });
     
     // חיפוש
