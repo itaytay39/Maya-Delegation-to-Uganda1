@@ -101,7 +101,7 @@ const GoogleSheetsSync = {
             SyncStatus.update(`נטענו ${participants.length} משתתפים`);
             ToastManager.show(`נטענו ${participants.length} משתתפים מהגיליון`);
             
-            this.updateUI();
+            this.updateUI(); // קריאה ל-updateUI לאחר טעינת המשתתפים
             
         } catch (error) {
             console.error("❌ שגיאה בטעינת נתונים:", error);
@@ -188,9 +188,12 @@ const GoogleSheetsSync = {
         return phone;
     },
     
+    // פונקציית updateUI מעודכנת עבור פילטרים
     updateUI() {
         if (typeof renderMarkers === 'function') renderMarkers();
         if (typeof updateParticipantCount === 'function') updateParticipantCount();
+        if (typeof populateCityFilter === 'function') populateCityFilter(); 
+        if (typeof applyFiltersAndSearch === 'function') applyFiltersAndSearch(); 
     },
     
     startAutoSync() {
@@ -250,7 +253,7 @@ const createMarkerIcon = () => L.divIcon({
     popupAnchor: [0, -36]
 });
 
-// פונקציית עזר לחישוב מרחק (הוחזרה)
+// פונקציית עזר לחישוב מרחק
 function distance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Radius of Earth in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -265,7 +268,8 @@ function distance(lat1, lon1, lat2, lon2) {
 function updateParticipantCount() {
     const countElement = document.getElementById('participant-count');
     if (countElement) {
-        countElement.textContent = `${participants.length} משתתפים`;
+        // נעדכן את הטקסט כדי לשקף את מספר המשתתפים המסוננים
+        countElement.textContent = `${markers.getLayers().length} מתוך ${participants.length} משתתפים`;
     }
 }
 
@@ -283,8 +287,10 @@ function renderMarkers(list = participants) {
         const whatsappNum = (p.whatsapp && p.whatsapp.length > 0) ? p.whatsapp : p.phone;
         const hasWhatsapp = whatsappNum && whatsappNum.length >= 9;
         
-        // לוגיקה לזיהוי משתמשים קרובים (הוחזרה)
+        // לוגיקה לזיהוי משתמשים קרובים 
         let nearby = null;
+        // חשוב: לוגיקת "קרוב" ב-renderMarkers כרגע סורקת את *כל* ה-participants, לא רק המסוננים.
+        // אם תרצה שהיא תפעל רק על מה שמוצג, תצטרך לשנות את הלוגיקה כאן
         for (let j = 0; j < participants.length; j++) {
             const other = participants[j];
             // ודא שלא משווים את המשתמש לעצמו, ושקואורדינטות קיימות
@@ -347,6 +353,7 @@ function renderMarkers(list = participants) {
     map.addLayer(markers); // הוספת קבוצת הסמנים למפה
     
     console.log(`✅ הוצגו ${list.length} סמנים על המפה`);
+    updateParticipantCount(); // עדכן את מונה המשתתפים גם כאן
 }
 
 // פונקציות ניהול משתמשים
@@ -386,7 +393,7 @@ window.deleteUser = function(idx) {
         fetch(SHEET_CONFIG.appsScriptUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded' // Apps Script מצפה לפורמט זה
+                'Content-Type': 'text/plain;charset=utf-8' // Apps Script מצפה לפורמט זה
             },
             body: JSON.stringify({ action: 'delete', payload: deletePayload })
         })
@@ -436,7 +443,7 @@ function setAdminMode(isAdminMode) {
         ToastManager.show('התנתקת בהצלחה! 👋');
     }
     
-    renderMarkers();
+    GoogleSheetsSync.updateUI(); // קריאה לפונקציית עדכון ה-UI המאוחדת
 }
 
 // טריוויה
@@ -627,24 +634,114 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // חיפוש
-    document.getElementById('search-input').addEventListener('input', function() {
-        const val = this.value.trim().toLowerCase();
+    // --- פילטרים חדשים למשתתפים ---
+    const cityFilterSelect = document.getElementById('city-filter');
+    const filterNearbyMeBtn = document.getElementById('filter-nearby-me-btn'); 
+    const clearFiltersBtn = document.getElementById('clear-filters-btn');
+    let currentFilters = {
+        city: '',
+        showNearbyMe: false 
+    };
+
+    let userLocation = null; // משתנה לשמירת מיקום המשתמש
+
+    // פונקציה לעדכון תיבת הבחירה של הערים
+    function populateCityFilter() {
+        const cities = [...new Set(participants.map(p => p.city).filter(c => c))]; // ערים ייחודיות, רק כאלה עם ערך
+        cities.sort(); // מיון אלפביתי
+        cityFilterSelect.innerHTML = '<option value="">כל הערים</option>'; // אפשרות ברירת מחדל
+        cities.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            cityFilterSelect.appendChild(option);
+        });
+        cityFilterSelect.value = currentFilters.city; // שמירה על הבחירה הנוכחית
+    }
+
+    // פונקציה לסינון המשתתפים (משלבת חיפוש ופילטרים)
+    function applyFiltersAndSearch() {
+        const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
         
-        if (!val) {
-            renderMarkers();
-            return;
-        }
-        
-        const filtered = participants.filter(p =>
-            p.name.toLowerCase().includes(val) ||
-            p.city.toLowerCase().includes(val) ||
-            p.phone.includes(val)
-        );
-        
+        const filtered = participants.filter(p => {
+            const nameMatch = p.name.toLowerCase().includes(searchTerm);
+            const cityMatch = p.city.toLowerCase().includes(searchTerm);
+            const phoneMatch = p.phone.includes(searchTerm);
+            
+            const generalSearchMatch = nameMatch || cityMatch || phoneMatch;
+
+            // פילטר עיר
+            const cityFilterMatch = currentFilters.city === '' || p.city === currentFilters.city;
+
+            // פילטר "משתתפים קרובים אליי"
+            const nearbyMeFilterMatch = !currentFilters.showNearbyMe || 
+                                        (userLocation && p.lat && p.lon && distance(userLocation.lat, userLocation.lon, p.lat, p.lon) <= 50); // טווח 50 ק"מ
+
+            return generalSearchMatch && cityFilterMatch && nearbyMeFilterMatch;
+        });
+
         renderMarkers(filtered);
+    }
+
+    // מאזינים לאירועי הפילטרים
+    cityFilterSelect.addEventListener('change', function() {
+        currentFilters.city = this.value;
+        applyFiltersAndSearch();
     });
-    
+
+    // מאזין לכפתור "משתתפים קרובים אליי"
+    filterNearbyMeBtn.addEventListener('click', () => {
+        if (!currentFilters.showNearbyMe && !userLocation) { // אם הכפתור לא פעיל ואין לנו מיקום עדיין
+            ToastManager.show('מבקש את מיקומך...', 'info');
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude
+                    };
+                    ToastManager.show('מיקום התקבל בהצלחה! 📍');
+                    currentFilters.showNearbyMe = true;
+                    filterNearbyMeBtn.classList.add('active');
+                    applyFiltersAndSearch();
+                    // אופציונלי: מרכז את המפה על מיקום המשתמש
+                    map.setView([userLocation.lat, userLocation.lon], 10); 
+                },
+                (error) => {
+                    console.error("שגיאה בקבלת מיקום:", error);
+                    ToastManager.show('שגיאה בקבלת מיקום. וודא שאפשרת שיתוף מיקום בדפדפן.', 'error');
+                    currentFilters.showNearbyMe = false; // וודא שהפילטר כבוי במקרה של שגיאה
+                    filterNearbyMeBtn.classList.remove('active');
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        } else { // אם הכפתור פעיל או שכבר יש לנו מיקום (לחיצה שנייה)
+            currentFilters.showNearbyMe = !currentFilters.showNearbyMe; // החלפת מצב
+            filterNearbyMeBtn.classList.toggle('active', currentFilters.showNearbyMe); // הוספה/הסרה של קלאס active
+            applyFiltersAndSearch();
+        }
+    });
+
+    clearFiltersBtn.addEventListener('click', function() {
+        currentFilters.city = '';
+        currentFilters.showNearbyMe = false; 
+        userLocation = null; // איפוס מיקום המשתמש
+        cityFilterSelect.value = ''; // איפוס תיבת הבחירה
+        filterNearbyMeBtn.classList.remove('active'); // הסרת קלאס active מכפתור המיקום
+        document.getElementById('search-input').value = ''; // ניקוי שדה חיפוש
+        applyFiltersAndSearch();
+    });
+
+    // מאזין החיפוש כעת קורא ל-applyFiltersAndSearch
+    document.getElementById('search-input').addEventListener('input', applyFiltersAndSearch);
+
+    // לוגיקה לכפתור "איפוס מפה" חדש
+    document.getElementById('reset-map-btn').addEventListener('click', () => {
+        map.setView([31.5, 34.75], 8); // חזרה למיקום ולזום ההתחלתיים
+        ToastManager.show('תצוגת המפה אופסה! 🌍');
+    });
+
+    // --- סיום פילטרים חדשים ---
+
     // סגירת מודלים בלחיצה חיצונית
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
@@ -661,11 +758,6 @@ document.addEventListener('DOMContentLoaded', function() {
         map.invalidateSize();
     }, 500);
 
-    // לוגיקה לכפתור "איפוס מפה" חדש
-    document.getElementById('reset-map-btn').addEventListener('click', () => {
-        map.setView([31.5, 34.75], 8); // חזרה למיקום ולזום ההתחלתיים
-        ToastManager.show('תצוגת המפה אופסה! 🌍');
-    });
 });
 
 // ניקוי בסגירת האפליקציה

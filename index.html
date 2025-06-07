@@ -31,12 +31,30 @@
             <div class="subtitle">מחברים בין חברים</div>
         </header>
 
-        <div class="search-container">
-            <div class="search-box">
+        <!-- Search and Filter Wrapper - Changed structure slightly to match image -->
+        <div class="search-filter-section-wrapper">
+            <div class="search-box-full-width">
                 <span class="material-symbols-outlined search-icon">search</span>
                 <input type="text" class="search-input" placeholder="חיפוש משתתפים" id="search-input">
             </div>
+
+            <div class="filter-buttons-container">
+                <!-- כפתור "משתתפים קרובים אליי" -->
+                <button id="filter-nearby-me-btn" class="filter-btn">
+                    <span class="material-symbols-outlined">near_me</span>
+                    קרובים אליי
+                </button>
+                <select id="city-filter" class="filter-select">
+                    <option value="">כל הערים</option>
+                    <!-- הערים יטענו לכאן באופן דינמי דרך JavaScript -->
+                </select>
+                <button id="clear-filters-btn" class="filter-btn clear-filters">
+                    <span class="material-symbols-outlined">clear</span>
+                    נקה פילטרים
+                </button>
+            </div>
         </div>
+        
 
         <div id="admin-controls" class="admin-controls" style="display: none;">
             <button id="import-btn" class="admin-control-btn">
@@ -61,6 +79,7 @@
             <button id="add-user-btn" class="fab add-fab" style="display: none;" title="הוסף משתמש">
                 <span class="material-symbols-outlined">add</span>
             </button>
+            <!-- כפתור "איפוס מפה" -->
             <button id="reset-map-btn" class="fab reset-fab" title="אפס תצוגת מפה">
                 <span class="material-symbols-outlined">my_location</span>
             </button>
