@@ -894,9 +894,15 @@
             popupAnchor: [0, -36]
         });
 
-        // Declare element variables at the top, assign in DOMContentLoaded
-        let adminModal, userModal, addBtn, adminControls, searchInput, participantCount, fileInput, cityFilter, resetViewFab;
-
+        // אלמנטים
+        const adminModal = document.getElementById('admin-login-modal');
+        const userModal = document.getElementById('user-form-modal');
+        const addBtn = document.getElementById('add-user-btn');
+        const adminControls = document.getElementById('admin-controls');
+        const searchInput = document.getElementById('search-input');
+        const participantCount = document.getElementById('participant-count');
+        const fileInput = document.getElementById('file-input');
+        const cityFilter = document.getElementById('city-filter');
 
         // פונקציות עזר (גלובליות)
         function distance(lat1, lon1, lat2, lon2) {
@@ -928,10 +934,8 @@
         }
 
         function updateParticipantCount() {
-            if (participantCount) { // Ensure element is defined before accessing
-                participantCount.textContent = `${participants.length} משתתפים`;
-                console.log(`📊 עודכן מספר משתתפים: ${participants.length}`);
-            }
+            participantCount.textContent = `${participants.length} משתתפים`;
+            console.log(`📊 עודכן מספר משתתפים: ${participants.length}`);
         }
 
         // --- Start of Google Sheets Sync object (as per original script.js) ---
@@ -944,37 +948,20 @@
                 if(document.getElementById('sync-btn')?.querySelector('.material-symbols-outlined')) {
                     document.getElementById('sync-btn').querySelector('.material-symbols-outlined').style.animation = 'spin 1s linear infinite';
                 }
-                console.log(`🔄 מתחיל טעינת נתונים מגיליון גוגל: ${url}`);
                 try {
                     const response = await fetch(url);
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error(`❌ שגיאת רשת בטעינת גיליון גוגל: ${response.status} - ${response.statusText}`, errorText);
-                        throw new Error(`Network response was not ok: ${response.statusText}`);
-                    }
+                    if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
                     const csvText = await response.text();
-                    console.log(`✅ גיליון גוגל נטען בהצלחה. אורך טקסט: ${csvText.length}`);
-                    console.log(`📋 ניתוח CSV מתחיל...`);
-
                     const rows = this.parseCSV(csvText);
-                    if (rows.length < 2) {
-                        console.warn('⚠️ אין מספיק נתונים בגיליון (רק כותרות או ריק).');
-                        throw new Error('No data or only headers in sheet');
-                    }
+                    if (rows.length < 2) throw new Error('No data or only headers in sheet');
                     
                     const headers = rows[0].map(h => h.trim()); 
-                    console.log('✅ כותרות CSV:', headers);
                     const fetchedParticipants = rows.slice(1).map(row => {
                         const obj = {}; 
                         headers.forEach((h, i) => obj[h] = row[i] || '');
                         
                         const lat = parseFloat(obj['Lat']);
                         const lon = parseFloat(obj['Lon']);
-
-                        // Validate lat/lon conversion
-                        if (isNaN(lat) || isNaN(lon)) {
-                            console.warn(`⚠️ שגיאת המרה: Lat/Lon לא חוקיים עבור רשומה: ${obj['שם פרטי']} ${obj['עיר']}. Lat: ${obj['Lat']}, Lon: ${obj['Lon']}`);
-                        }
 
                         return { 
                             name: `${obj['שם פרטי'] || ''} ${obj['שם משפחה'] || ''}`.trim(), 
@@ -986,9 +973,8 @@
                             phone: this.formatPhone(obj['מספר טלפון']), 
                             whatsapp: this.formatPhone(obj['מספר ווצאפ'] || obj['מספר WhatsApp'])
                         };
-                    }).filter(p => p.name && p.lat !== null && p.lon !== null); // Filter out entries with invalid lat/lon
+                    }).filter(p => p.name && p.lat !== null && p.lon !== null); 
 
-                    console.log(`✅ ניתוח CSV הושלם. נמצאו ${fetchedParticipants.length} משתתפים תקפים.`);
                     window.participants = fetchedParticipants; 
                     StorageManager.save(); 
                     if (isManual) ToastManager.show(`סונכרנו ${window.participants.length} משתתפים מגיליון גוגל.`, 'success');
@@ -1007,25 +993,19 @@
                 }
             },
             parseCSV(csvText) {
-                const lines = csvText.split(/\r\n|\n/).filter(line => line.trim() !== '');
-                if (lines.length === 0) return []; // Handle empty CSV text
-                
-                const parsedRows = [];
-                // Regex to handle commas inside quotes
-                const csvRegex = /(?:^|,)(?:"([^"]*(?:""[^"]*)*)"|([^,]*))/g;
-
-                lines.forEach(line => {
-                    const row = [];
-                    let match;
-                    while ((match = csvRegex.exec(line)) !== null) {
-                        // If a quoted value (group 1) exists, use it. Otherwise, use unquoted (group 2).
-                        // Handle escaped quotes (e.g., "" becomes ")
-                        let value = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
-                        row.push(value.trim());
+                const lines = csvText.split(/\r\n|\n/).filter(line => line.trim() !== ''); 
+                return lines.map(line => {
+                    const result = []; let current = ''; let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i]; const nextChar = line[i+1];
+                        if (char === '"' && inQuotes && nextChar === '"') { current += '"'; i++; } 
+                        else if (char === '"') { inQuotes = !inQuotes; } 
+                        else if (char === ',' && !inQuotes) { result.push(current.trim().replace(/^"|"$/g, '')); current = ''; } 
+                        else { current += char; }
                     }
-                    parsedRows.push(row);
+                    result.push(current.trim().replace(/^"|"$/g, ''));
+                    return result;
                 });
-                return parsedRows;
             },
             formatPhone(phone) { 
                 if (!phone) return ''; 
@@ -1045,13 +1025,11 @@
 
 
         function populateCityFilter() { 
-            if (cityFilter) { 
-                const cities = [...new Set(participants.map(user => user.city))].sort((a,b) => a.localeCompare(b, 'he')); 
-                const currentCity = cityFilter.value; 
-                cityFilter.innerHTML = '<option value="">כל הערים</option>'; 
-                cities.forEach(city => cityFilter.innerHTML += `<option value="${city}">${city}</option>`); 
-                cityFilter.value = cities.includes(currentCity) ? currentCity : ""; 
-            }
+            const cities = [...new Set(participants.map(user => user.city))].sort((a,b) => a.localeCompare(b, 'he')); 
+            const currentCity = cityFilter.value; 
+            cityFilter.innerHTML = '<option value="">כל הערים</option>'; 
+            cities.forEach(city => cityFilter.innerHTML += `<option value="${city}">${city}</option>`); 
+            cityFilter.value = cities.includes(currentCity) ? currentCity : ""; 
         }
 
         let markers = L.markerClusterGroup(); 
@@ -1059,20 +1037,14 @@
         function renderMarkers(list = participants) {
             console.log("🗺️ מציג סמנים על המפה...");
             
-            // Clear all existing markers from the map AND the cluster group
+            // Re-initialize markers group for each renderMarkers call
             if (markers) {
                 map.removeLayer(markers);
             }
-            markers = L.markerClusterGroup(); // Re-initialize MarkerClusterGroup for fresh render
+            markers = L.markerClusterGroup(); // Initialize MarkerClusterGroup here
 
             const groupedLocations = {};
             list.forEach(p => {
-                // Ensure valid lat/lon before grouping
-                if (p.lat === null || isNaN(p.lat) || p.lon === null || isNaN(p.lon)) {
-                    console.warn(`Participant ${p.name} has invalid coordinates (${p.lat}, ${p.lon}) and will be skipped for marker display.`);
-                    return; 
-                }
-                // Group by exact coordinates
                 const key = `${p.lat},${p.lon}`;
                 if (!groupedLocations[key]) {
                     groupedLocations[key] = [];
@@ -1087,28 +1059,30 @@
                 const baseLon = group[0].lon;
 
                 group.forEach((p, indexInGroup) => {
-                    let finalLat = baseLat;
-                    let finalLon = baseLon;
+                    if (p.lat === null || isNaN(p.lat) || p.lon === null || isNaN(p.lon)) {
+                        console.warn(`Participant ${p.name} has invalid coordinates and will be skipped for marker display.`);
+                        return; 
+                    }
 
                     // Apply a small deterministic offset for markers at the exact same location
-                    if (group.length > 1) {
-                        // Offset magnitude can be adjusted. Smaller for tighter spread, larger for more visible separation.
-                        const offsetMagnitude = 0.00005 * (indexInGroup + 1); 
-                        const angleStep = (2 * Math.PI) / group.length;
-                        const angle = indexInGroup * angleStep;
-                        finalLat = baseLat + offsetMagnitude * Math.sin(angle);
-                        finalLon = baseLon + offsetMagnitude * Math.cos(angle);
-                    }
+                    // This creates a "spiderfy" effect when the cluster expands
+                    const offsetMagnitude = 0.00005; // Smaller offset for finer spread
+                    const angleStep = (2 * Math.PI) / group.length;
+                    const angle = indexInGroup * angleStep;
+                    const offsetX = offsetMagnitude * Math.cos(angle);
+                    const offsetY = offsetMagnitude * Math.sin(angle);
+
+                    const finalLat = baseLat + offsetY;
+                    const finalLon = baseLon + offsetX;
+
 
                     const whatsappNum = (p.whatsapp && p.whatsapp.length > 0) ? p.whatsapp : p.phone;
                     const hasWhatsapp = whatsappNum && whatsappNum.length >= 9;
                     
                     let nearby = null;
-                    // For nearby users, search within the *original* participants array to find distance
-                    const currentParticipantIndex = participants.indexOf(p);
                     for (let j = 0; j < participants.length; j++) {
-                        if (j === currentParticipantIndex) continue; // Skip self
                         const other = participants[j];
+                        if (other === p) continue;
                         if (
                             typeof other.lat === "number" &&
                             typeof other.lon === "number" &&
@@ -1470,68 +1444,47 @@
         window.addEventListener('resize', () => { map.invalidateSize(); });
         setTimeout(() => { map.invalidateSize(); }, 500);
 
-        // טעינת נתונים והאתחול הכללי
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log("🚀 מתחיל עיבוד נתונים ראשוני...");
-            
-            // Assign elements only after DOMContentLoaded
-            adminModal = document.getElementById('admin-login-modal');
-            userModal = document.getElementById('user-form-modal');
-            addBtn = document.getElementById('add-user-btn');
-            adminControls = document.getElementById('admin-controls');
-            searchInput = document.getElementById('search-input');
-            participantCount = document.getElementById('participant-count');
-            fileInput = document.getElementById('file-input');
-            cityFilter = document.getElementById('city-filter');
-            resetViewFab = document.getElementById('reset-view-fab'); // Assign reset button
+        // טעינת נתונים מ-localStorage או שימוש בברירת מחדל
+        console.log("🚀 מתחיל עיבוד נתונים ראשוני...");
+        if (!StorageManager.load()) {
+            console.log("📦 משתמש בנתונים לדוגמה");
+            StorageManager.save(); // שמירה ראשונית
+        }
 
-            try {
-                // נסה לטעון מגיליון גוגל קודם
-                await GoogleSheetsSync.loadData(true); 
-            } catch (error) {
-                console.error("❌ טעינה מגיליון גוגל נכשלה:", error);
-                ToastManager.show("שגיאה בטעינת נתונים מגיליון גוגל. מנסה לטעון מזיכרון מקומי.", 'error');
-                // אם הטעינה מגיליון גוגל נכשלה, נסה מ-localStorage
-                if (StorageManager.load()) {
-                    ToastManager.show("נתונים נטענו בהצלחה מזיכרון מקומי (מצב גיבוי).", 'success');
-                } else {
-                    console.log("📦 משתמש בנתונים לדוגמה (מכיוון שגם גיליון גוגל וגם אחסון מקומי נכשלו)");
-                    ToastManager.show("לא ניתן לטעון נתונים. משתמש בנתונים לדוגמה.", 'warning');
-                    // participants array כבר מכיל את הנתונים המקודדים
-                }
-            }
-            
-            // טעינה ראשונית ועדכון UI לאחר שהנתונים נטענו מאיזשהו מקור
-            populateCityFilter();
-            renderMarkers();
-            updateParticipantCount();
-            
-            // מאזיני אירועים נוספים
-            document.getElementById('sync-btn').addEventListener('click', () => GoogleSheetsSync.loadData(true));
-            
-            // Event listener for the reset view FAB
-            resetViewFab.addEventListener('click', () => {
-                map.setView([31.5, 34.75], 8); // Reset to Israel center and zoom
-                ToastManager.show('הצגת מפה אופסה למרכז ישראל', 'info');
-            });
+        renderMarkers();
+        updateParticipantCount();
+        console.log("✅ אפליקציית מאיה מוכנה לשימוש!");
 
-            GoogleSheetsSync.startAutoSync(); // התחלת סנכרון אוטומטי
-            console.log("✅ אפליקציית מאיה מוכנה לשימוש!");
+        // הוספת CSS לאנימציית slideOut (Original location)
+        const additionalCSS = `
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        `;
+        const style = document.createElement('style');
+        style.innerHTML = additionalCSS;
+        document.head.appendChild(style);
 
-            // 📊 סטטיסטיקות למפתחים
-            console.log(`
-            📊 סטטיסטיקות המערכת:
-            👥 משתתפים: ${participants.length}
-            🔐 מצב אדמין: ${admin ? 'מחובר' : 'מנותק'}
-            🗺️ מרכז מפה: [31.5, 34.75]
-            🎨 עיצוב: Material Design 3 מתקדם
-            📱 רספונסיבי: מותאם למובייל בלבד
-            🔍 חיפוש: זמין
-            🚗 נסיעות משותפות: זמין
-            📊 יבוא/יצוא Excel: זמין לאדמין
-            💾 אחסון: localStorage
-            🔐 הגנת אדמין: מתקדמת
-            `);
+        // 📊 סטטיסטיקות למפתחים
+        console.log(`
+        📊 סטטיסטיקות המערכת:
+        👥 משתתפים: ${participants.length}
+        🔐 מצב אדמין: ${admin ? 'מחובר' : 'מנותק'}
+        🗺️ מרכז מפה: [31.5, 34.75]
+        🎨 עיצוב: Material Design 3 מתקדם
+        📱 רספונסיבי: מותאם למובייל בלבד
+        🔍 חיפוש: זמין
+        🚗 נסיעות משותפות: זמין
+        📊 יבוא/יצוא Excel: זמין לאדמין
+        💾 אחסון: localStorage
+        🔐 הגנת אדמין: מתקדמת
+        `);
+
+        // Handle click on reset view FAB - added by Gemini, adjusted for Leaflet
+        document.getElementById('reset-view-fab').addEventListener('click', () => {
+            map.setView([31.5, 34.75], 8); // Reset to Israel center and zoom
+            ToastManager.show('הצגת מפה אופסה למרכז ישראל', 'info');
         });
     </script>
 </body>
