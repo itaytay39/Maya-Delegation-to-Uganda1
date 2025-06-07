@@ -62,7 +62,7 @@ const SyncStatus = {
 const GoogleSheetsSync = {
     async loadParticipants() {
         try {
-            console.log("📡 טוען נתונים מגוגל שיטס...");
+            console.log("� טוען נתונים מגוגל שיטס...");
             SyncStatus.update("טוען נתונים...");
             
             const response = await fetch(SHEET_CONFIG.participantsUrl);
@@ -368,6 +368,7 @@ window.editUser = function(idx) {
     document.getElementById('user-whatsapp').value = p.whatsapp || '';
     
     document.getElementById('user-form-modal').hidden = false;
+    GoogleSheetsSync.stopAutoSync(); // עצירת סנכרון אוטומטי בעת פתיחת מודל עריכה
 };
 
 window.deleteUser = function(idx) {
@@ -386,7 +387,7 @@ window.deleteUser = function(idx) {
         fetch(SHEET_CONFIG.appsScriptUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded' // Apps Script מצפה לפורמט זה
+                'Content-Type': 'text/plain;charset=utf-8' // Apps Script מצפה לפורמט זה
             },
             body: JSON.stringify({ action: 'delete', payload: deletePayload })
         })
@@ -544,11 +545,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('user-phone').value = '';
         document.getElementById('user-whatsapp').value = '';
         document.getElementById('user-form-modal').hidden = false;
+        GoogleSheetsSync.stopAutoSync(); // עצירת סנכרון אוטומטי בעת פתיחת מודל הוספה
     });
     
     // ביטול טופס משתמש
     document.getElementById('user-cancel').addEventListener('click', () => {
         document.getElementById('user-form-modal').hidden = true;
+        GoogleSheetsSync.startAutoSync(); // חידוש סנכרון אוטומטי בעת ביטול
     });
     
     // שמירת משתמש
@@ -601,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'text/plain;charset=utf-8' // Apps Script מצפה לפורמט זה
                 },
-                body: JSON.stringify({ action, payload: userData }) //
+                body: JSON.stringify({ action, payload: userData })
             });
 
             const result = await response.json();
@@ -617,6 +620,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             document.getElementById('user-form-modal').hidden = true;
             editIdx = null; // איפוס
+            GoogleSheetsSync.startAutoSync(); // חידוש סנכרון אוטומטי בעת שמירה
         } catch (err) {
             console.error("❌ שגיאה בשמירת משתמש:", err);
             ToastManager.show('שגיאה בשמירת נתונים. נסה שוב.', 'error');
@@ -649,6 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
             e.target.hidden = true;
+            GoogleSheetsSync.startAutoSync(); // חידוש סנכרון אוטומטי בעת סגירה חיצונית
         }
     });
     
@@ -674,3 +679,4 @@ window.addEventListener('beforeunload', () => {
 });
 
 console.log("✅ אפליקציית מאיה מחוברת לגוגל שיטס מוכנה לשימוש!");
+�
