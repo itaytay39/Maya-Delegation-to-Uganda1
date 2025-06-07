@@ -129,17 +129,15 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // הגדרות Firebase: כעת נשתמש במפתח ה-API שהוזן ישירות על ידי המשתמש
-        // ודא שמפתח ה-API שהעתקת מ-Google Cloud Console מודבק כאן במקום 'YOUR_API_KEY_HERE'.
-        // וודא שגם 'projectId' הוא מזהה הפרויקט הנכון שלך (maya-delegation-map).
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // עדיין משתמשים ב-appId מהסביבה
+        // הגדרות Firebase: אובייקט firebaseConfig המדויק מפרויקט Firebase שלך
+        // זהו התיקון לשגיאת "auth/configuration-not-found"
         const firebaseConfig = {
-          apiKey: "AIzaSyCEo0QBID_qOEivVCmbcg8Z_YYY4cIjwj0", // מפתח ה-API שעודכן על ידך
-          authDomain: "maya-delegation-map.firebaseapp.com", // ודא שזהו הדומיין הנכון של הפרויקט החדש
-          projectId: "maya-delegation-map", // ודא שזהו מזהה הפרויקט החדש שלך
-          storageBucket: "maya-delegation-map.appspot.com",
-          messagingSenderId: "543677265577", // ייתכן שיצטרך להתעדכן לפי הפרויקט החדש
-          appId: "1:543677265577:web:7c8f122ed21f6c5aaadbb8" // ייתכן שיצטרך להתעדכן לפי הפרויקט החדש
+            apiKey: "AIzaSyCQc9P30rQmjoR9rsAPF1XrTiBwCF9_Cg",
+            authDomain: "maya-delegation-to-uganda.firebaseapp.com",
+            projectId: "maya-delegation-to-uganda",
+            storageBucket: "maya-delegation-to-uganda.appspot.com",
+            messagingSenderId: "543677265577",
+            appId: "1:543677265577:web:2d9f122e2b545dff6b"
         };
         
         const app = initializeApp(firebaseConfig);
@@ -149,7 +147,8 @@
         let map;
         let infoWindow;
         let participants = [];
-        let userId = 'טוען...'; // משתנה לשמירת ה-userId
+        let userId = 'טוען...'; 
+        let googleMapsScriptLoaded = false; // Flag to prevent multiple script loads
 
         const elements = {
             appContainer: document.getElementById('app-container'),
@@ -158,100 +157,105 @@
             cityFilter: document.getElementById('city-filter'),
             participantCount: document.getElementById('participant-count'),
             mapDiv: document.getElementById('map'),
-            userIdDisplay: document.getElementById('user-id-display'), // אלמנט להצגת userId
+            userIdDisplay: document.getElementById('user-id-display'), 
         };
 
         // פונקציה לבדיקת גישה - שונתה כדי לאפשר גישה מיידית
         function checkAccess() {
-            // הופך את מיכל האפליקציה לגלוי
             elements.appContainer.classList.add('visible');
             
-            // האזנה לשינויי מצב אימות וביצוע פעולות Firestore רק לאחר אימות
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
-                    userId = user.uid; // הגדרת userId כ-uid של המשתמש המאומת
+                    userId = user.uid; 
                     elements.userIdDisplay.textContent = `מזהה משתמש: ${userId}`;
                     console.log("User authenticated:", userId);
-                    await initMapAndLogic(); // אתחול המפה והלוגיקה לאחר הכניסה
+                    await initMapAndLogic(); 
                 } else {
-                    // אם אין משתמש מאומת, נסה להיכנס אנונימית
-                    if (typeof __initial_auth_token !== 'undefined') {
-                        try {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } catch (error) {
-                            handleAuthError(error);
-                        }
-                    } else {
-                        try {
-                            await signInAnonymously(auth);
-                        } catch (error) {
-                            handleAuthError(error);
-                        }
-                    }
-                     // אם עדיין אין משתמש לאחר ניסיון הכניסה, צור מזהה רנדומלי
-                    if (!auth.currentUser) {
-                        userId = crypto.randomUUID();
+                    // Sign in anonymously if no custom token is provided
+                    try {
+                        await signInAnonymously(auth);
+                        userId = auth.currentUser?.uid || crypto.randomUUID(); // Ensure userId is set
                         elements.userIdDisplay.textContent = `מזהה משתמש אורח: ${userId}`;
                         console.log("Signed in anonymously. Map is accessible.");
                         await initMapAndLogic();
+                    } catch (error) {
+                        handleAuthError(error);
                     }
                 }
             });
-            // מסך "הגישה נחסמה" לא יוצג עוד באופן אוטומטי
         }
         
         function handleAuthError(error) {
              console.error("Authentication failed:", error);
-             // במקרה של כשל אימות, נציג הודעה בקונסול.
              console.warn("שגיאה באימות Firebase. נתוני המפה עשויים לא להיטען עקב הרשאות.");
-             // נמשיך לנסות לטעון את המפה, אך קריאות Firestore ייכשלו ללא אימות תקין.
-             initMapAndLogic();
+             
+             let errorMessage = '';
+             if (error.code === 'auth/identity-toolkit-api-has-not-been-used-in-project' || error.code === 'auth/api-key-not-valid' || error.code === 'auth/configuration-not-found') {
+                 errorMessage = `
+                     <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאת אימות Firebase</h1>
+                     <p style="font-size: 1rem;">נא לוודא שכל הגדרות ה-Firebase (apiKey, authDomain וכו') נכונות בקוד, וכי 'Identity Toolkit API' מופעל בפרויקט שלך ב-Google Cloud Console.</p>
+                     <p style="font-size: 0.8rem;">עבור ל-Firebase Console -> הגדרות פרויקט -> האפליקציות שלך, והעתק את "Firebase SDK snippet" בתצורת "Config".</p>
+                     <p style="font-size: 0.8rem;">וודא גם ש-'Identity Toolkit API' מופעל: <a href="https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=${firebaseConfig.projectId}" target="_blank" style="color: #6750A4;">הפעל Identity Toolkit API</a></p>
+                 `;
+             } else if (error.code === 'auth/requests-from-referer-blocked') {
+                  const currentUrl = window.location.href.split('?')[0]; 
+                  errorMessage = `
+                        <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה: בקשות Firebase נחסמו</h1>
+                        <p style="font-size: 1rem;">נראה שהכתובת הנוכחית של האתר אינה מורשית עבור Firebase Authentication.</p>
+                        <p style="font-size: 0.8rem;">אנא הוסף את הכתובת הבאה (או את דומיין הבסיס שלה עם כוכבית) להגבלות ה-HTTP referrers בחשבון Google Cloud, עבור מפתח ה-API שלך:</p>
+                        <p style="font-size: 0.9rem; font-weight: bold; color: #333;"><code>${currentUrl.split('/').slice(0, 3).join('/')}/*</code></p>
+                        <p style="font-size: 0.8rem;">עבור אל <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud (אישורי כניסה)</a> ועדכן את ההגבלות עבור מפתח ה-API שלך.</p>
+                    `;
+             } else {
+                 errorMessage = `
+                    <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה באימות</h1>
+                    <p style="font-size: 1rem;">שגיאת אימות ב-Firebase. בדוק את הגדרות הפרויקט והרשאות. (קוד שגיאה: ${error.code})</p>
+                `;
+             }
+             elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">${errorMessage}</div>`;
         }
 
         async function loadDataFromFirestore() {
             try {
-                // נתיב הקולקציה שונה כדי להתאים למודל ההרשאות של הקנבס (נתונים ציבוריים)
-                const collectionPath = `artifacts/${appId}/public/data/participants`;
+                // נתיב הקולקציה שונה ל"participants" בלבד
+                // כדי להתאים למיקום הנתונים בפועל במסד הנתונים של המשתמש, כפי שנראה בצילום המסך.
+                // אם הנתונים יהיו בנתיב מורכב יותר בעתיד, יש לעדכן זאת.
+                const collectionPath = `participants`; 
                 console.log("Attempting to load data from Firestore path:", collectionPath);
 
-                // נמנע משימוש ב-orderBy ב-Firestore כדי למנוע שגיאות אינדקסים, נמיין את הנתונים ב-JS
                 const q = collection(db, collectionPath);
                 const querySnapshot = await getDocs(q);
                 participants = [];
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    // ודא שקווי רוחב ואורך הם מספרים
                     data.lat = parseFloat(data.Lat);
                     data.lon = parseFloat(data.Lon);
-                    participants.push(data);
+                    // מוודאים שנתוני מיקום קיימים ותקינים לפני הוספה
+                    if (!isNaN(data.lat) && !isNaN(data.lon)) {
+                         participants.push(data);
+                    } else {
+                        console.warn("Participant data missing valid Lat/Lon:", data);
+                    }
                 });
-                // מיון הנתונים ב-JavaScript במקום ב-Firestore
                 participants.sort((a, b) => (a.name || "").localeCompare(b.name || "", 'he'));
 
                 populateCityFilter();
                 applyFilters();
             } catch (error) {
                 console.error("Firestore Error:", error);
-                // במקרה של שגיאה בטעינת נתונים, נציג הודעה ב-UI למשתמש
                 elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
                     <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה בטעינת נתוני הקבוצה</h1>
-                    <p style="font-size: 1rem;">נא לוודא שיש חיבור אינטרנט ושהרשאות הגישה ל-Firestore מוגדרות כראוי עבור המשתמש הנוכחי. (ראה קונסולת מפתחים לפרטים)</p>
+                    <p style="font-size: 1rem;">נא לוודא שיש חיבור אינטרנט, שהרשאות הגישה ל-Firestore מוגדרות כראוי, ושהנתונים נמצאים בנתיב הנכון: 'participants'.</p>
+                    <p style="font-size: 0.8rem;">(ראה קונסולת מפתחים לפרטים)</p>
                 </div>`;
             }
         }
 
         async function initMapAndLogic() {
-            // שגיאת 'ApiTargetBlockedMapError' מצביעה לרוב על כך שמפתח ה-API
-            // אינו מוגדר כראוי עבור Google Maps JavaScript API בחשבון Google Cloud,
-            // או שיש לו הגבלות HTTP referrer שחוסמות את הדומיין הנוכחי.
-            // הקוד כאן מוודא שהסקריפט נטען עם המפתח המצוין ב-firebaseConfig.
-            
-            // בודק אם ספריית google.maps כבר נטענה
-            if (typeof google === 'undefined' || typeof google.maps === 'undefined' || typeof google.maps.importLibrary === 'undefined') {
+            if (!googleMapsScriptLoaded) {
                 console.warn("Google Maps API is not loaded yet. Attempting to load dynamically...");
                 const script = document.createElement('script');
-                // שימוש במפתח ה-API מ-firebaseConfig
-                script.src = `https://maps.googleapis.com/maps/api/js?key=${firebaseConfig.apiKey}&libraries=maps`; // הוספת libraries=maps
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${firebaseConfig.apiKey}&libraries=maps`; 
                 script.async = true;
                 script.defer = true;
                 document.head.appendChild(script);
@@ -259,8 +263,8 @@
                 try {
                     await new Promise((resolve, reject) => {
                         script.onload = () => {
-                            // ודא ש-google.maps.importLibrary זמין לפני ה-resolve
                             if (typeof google !== 'undefined' && typeof google.maps !== 'undefined' && typeof google.maps.importLibrary === 'function') {
+                                googleMapsScriptLoaded = true; 
                                 resolve();
                             } else {
                                 reject(new Error("Google Maps script loaded, but importLibrary is not available."));
@@ -274,7 +278,6 @@
                     console.log("Google Maps script loaded successfully.");
                 } catch (error) {
                     console.error("Error during Google Maps script loading:", error);
-                    // אם הסקריפט לא נטען, אין טעם להמשיך עם מפות Google
                     elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
                         <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה בטעינת ספריית המפות</h1>
                         <p style="font-size: 1rem;">ייתכן שמפתח ה-API של Google Maps אינו תקין או שאינו מוגדר כראוי בחשבון Google Cloud.</p>
@@ -283,51 +286,55 @@
                     return; 
                 }
             } else {
-                console.log("Google Maps API already loaded.");
+                console.log("Google Maps API already loaded (skipped dynamic load).");
             }
             
             try {
-                // נמשיך לנסות לטעון את ספריית "maps" גם אם היא כבר נטענה דרך הסקריפט, כדי לוודא שכל הפונקציות זמינות.
                 const { Map, InfoWindow } = await google.maps.importLibrary("maps");
                 infoWindow = new InfoWindow();
                 
                 map = new Map(elements.mapDiv, {
-                    center: { lat: 31.5, lng: 34.75 }, // מיקום התחלתי: מרכז ישראל בערך
-                    zoom: 8, // רמת זום התחלתית
-                    disableDefaultUI: true, // הסתרת פקדי UI ברירת מחדל
-                    zoomControl: true // הצגת פקד זום בלבד
+                    center: { lat: 31.5, lng: 34.75 }, 
+                    zoom: 8, 
+                    disableDefaultUI: true, 
+                    zoomControl: true 
                 });
                 console.log("Google Map initialized.");
             } catch (error) {
                 console.error("Error initializing Google Map. This might be due to API key restrictions or other configuration issues:", error);
-                // הצגת הודעה ב-UI למשתמש אם המפה לא מצליחה להיטען
-                elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
-                    <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה באתחול המפה</h1>
-                    <p style="font-size: 1rem;">נא לוודא שמפתח ה-API של Google Maps תקין ומוגדר כראוי עבור דומיין זה.</p>
-                    <p style="font-size: 0.8rem;">אנא בדוק את <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud</a> עבור הגבלות מפתח API.</p>
-                </div>`;
-                return; // יציאה מהפונקציה אם המפה לא נטענה
+                if (error.code === 'RefererNotAllowedMapError') {
+                    const currentUrl = window.location.href.split('?')[0]; 
+                    elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
+                        <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה: דומיין לא מורשה למפות Google</h1>
+                        <p style="font-size: 1rem;">נראה שהכתובת הנוכחית של האתר אינה מורשית עבור מפתח ה-API של מפות Google שלך.</p>
+                        <p style="font-size: 0.8rem;">אנא הוסף את הכתובת הבאה (או את דומיין הבסיס שלה עם כוכבית) להגבלות ה-HTTP referrers בחשבון Google Cloud:</p>
+                        <p style="font-size: 0.9rem; font-weight: bold; color: #333;"><code>${currentUrl.split('/').slice(0, 3).join('/')}/*</code></p>
+                        <p style="font-size: 0.8rem;">עבור אל <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud (אישורי כניסה)</a> ועדכן את ההגבלות עבור מפתח ה-API שלך.</p>
+                    </div>`;
+                } else {
+                    elements.mapDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #DC3545;">
+                        <h1 style="font-size: 1.5rem; margin-bottom: 10px;">שגיאה באתחול המפה</h1>
+                        <p style="font-size: 1rem;">נא לוודא שמפתח ה-API של Google Maps תקין ומוגדר כראוי עבור דומיין זה.</p>
+                        <p style="font-size: 0.8rem;">אנא בדוק את <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #6750A4;">קונסולת Google Cloud</a> עבור הגבלות מפתח API.</p>
+                    </div>`;
+                }
+                return; 
             }
 
-
-            // אירועים לפילטרים
             elements.searchInput.addEventListener('input', applyFilters);
             elements.cityFilter.addEventListener('change', applyFilters);
             
             await loadDataFromFirestore();
         }
 
-        // פונקציית סינון והצגה מחדש של הסמנים
         function applyFilters() {
             const searchTerm = elements.searchInput.value.trim().toLowerCase();
             const selectedCity = elements.cityFilter.value;
             let filtered = participants;
             
-            // סינון לפי עיר
             if (selectedCity) {
                 filtered = filtered.filter(p => p.city === selectedCity);
             }
-            // סינון לפי שם
             if (searchTerm) {
                 filtered = filtered.filter(p => p.name && p.name.toLowerCase().includes(searchTerm));
             }
@@ -335,26 +342,22 @@
             renderMarkers(filtered);
         }
         
-        // מילוי רשימת הערים בפילטר
         function populateCityFilter() {
             const cities = [...new Set(participants.map(user => user.city || "לא צוין"))].sort((a,b) => a.localeCompare(b, 'he'));
             elements.cityFilter.innerHTML = '<option value="">כל הערים</option>';
             cities.forEach(city => {
                 if (city) {
-                    elements.cityFilter.innerHTML += `<option value="${city}">${city.charAt(0).toUpperCase() + city.slice(1)}</option>`; // Capitalize first letter for display
+                    elements.cityFilter.innerHTML += `<option value="${city}">${city.charAt(0).toUpperCase() + city.slice(1)}</option>`; 
                 }
             });
         }
         
-        let currentMarkers = []; // מערך לשמירת הסמנים הנוכחיים
-        // פונקציה להצגת סמנים על המפה
+        let currentMarkers = []; 
         function renderMarkers(list) {
-            // הסרת כל הסמנים הקיימים
             currentMarkers.forEach(marker => marker.setMap(null));
             currentMarkers = [];
             
             list.forEach(p => {
-                // ודא שיש נתוני מיקום חוקיים
                 if (p.lat && p.lon && !isNaN(p.lat) && !isNaN(p.lon)) {
                     const marker = new google.maps.Marker({ position: { lat: p.lat, lng: p.lon }, map: map });
                     marker.addListener('click', () => {
@@ -368,11 +371,9 @@
                     currentMarkers.push(marker);
                 }
             });
-            // עדכון מונה המשתתפים
             elements.participantCount.textContent = `${list.length} משתתפים`;
         }
         
-        // התחל את תהליך בדיקת הגישה (שכעת נותן גישה תמיד)
         checkAccess();
     </script>
 </body>
