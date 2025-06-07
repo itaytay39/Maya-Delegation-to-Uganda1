@@ -29,7 +29,7 @@
             height: 100%; display: flex; flex-direction: column;
         }
 
-        /* --- ACCESS DENIED SCREEN --- */
+        /* --- מסך דחיית גישה --- */
         #access-denied-container {
             align-items: center; justify-content: center; text-align: center;
             padding: 2rem; display: none; /* נשאר מוסתר כי הסרנו את הצורך באסימון גישה */
@@ -38,51 +38,51 @@
         .access-denied-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
         .access-denied-text { font-size: 1.1rem; color: var(--md-sys-on-surface-variant); line-height: 1.6; }
         
-        /* --- MAIN APP (Initially hidden) --- */
+        /* --- אפליקציה ראשית (מוסתרת בהתחלה) --- */
         #app-container { display: none; }
         #app-container.visible { display: flex; }
 
-        /* --- Updated Header Styling --- */
+        /* --- עיצוב כותרת מעודכן --- */
         .header {
-            /* Changed to a lighter, more Google-like gradient */
-            background: linear-gradient(135deg, #e0e7ff 0%, #c3daff 100%); /* Light blue/purple gradient */
-            padding: 1.5rem 1rem; /* Increased padding */
+            /* שונה לגרדיאנט בהיר יותר, בסגנון גוגל */
+            background: linear-gradient(135deg, #e0e7ff 0%, #c3daff 100%); /* גרדיאנט כחול/סגול בהיר */
+            padding: 1.5rem 1rem; /* הגדלת ריווח פנימי */
             display: flex;
-            flex-direction: column; /* Stack logo, title, slogan vertically */
-            align-items: center; /* Center items horizontally */
-            justify-content: center; /* Center items vertically if needed */
-            color: #49454F; /* Darker text color for contrast on light background */
-            border-bottom: none; /* Removed border */
+            flex-direction: column; /* סידור לוגו, כותרת, סלוגן אחד מתחת לשני */
+            align-items: center; /* יישור פריטים למרכז אופקית */
+            justify-content: center; /* יישור פריטים למרכז אנכית במידת הצורך */
+            color: #49454F; /* צבע טקסט כהה יותר לקונטרסט על רקע בהיר */
+            border-bottom: none; /* הוסר גבול תחתון */
             flex-shrink: 0;
-            text-align: center; /* Ensure text is centered */
+            text-align: center; /* ודא שהטקסט ממורכז */
         }
         .logo-maya {
-            width: 90px; /* Further increased logo size */
-            height: 90px; /* Further increased logo size */
+            width: 90px; /* הגדלת גודל הלוגו */
+            height: 90px; /* הגדלת גודל הלוגו */
             border-radius: 50%;
-            margin-bottom: 0.75rem; /* Space between logo and title */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Added subtle shadow */
-            background-color: white; /* Ensure white background for logo */
-            padding: 5px; /* Small padding around the image inside the circle */
-            object-fit: contain; /* Ensure the image fits within the circle */
+            margin-bottom: 0.75rem; /* ריווח בין הלוגו לכותרת */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* הוספת צל עדין */
+            background-color: white; /* ודא רקע לבן ללוגו */
+            padding: 5px; /* ריווח פנימי קטן סביב התמונה בתוך העיגול */
+            object-fit: contain; /* ודא שהתמונה מתאימה בתוך העיגול */
         }
         .header-title {
-            font-size: 1.75rem; /* Larger title */
-            font-weight: 700; /* Bolder title */
-            margin-bottom: 0.25rem; /* Space between title and slogan */
-            color: var(--md-sys-on-surface); /* Ensure good contrast */
+            font-size: 1.75rem; /* גודל כותרת גדול יותר */
+            font-weight: 700; /* כותרת מודגשת יותר */
+            margin-bottom: 0.25rem; /* ריווח בין הכותרת לסלוגן */
+            color: var(--md-sys-on-surface); /* ודא קונטרסט טוב */
         }
         .header-slogan {
-            font-size: 1rem; /* Slogan font size */
-            font-weight: 400; /* Normal weight */
-            color: var(--md-sys-on-surface-variant); /* Adjusted slogan color for contrast */
+            font-size: 1rem; /* גודל גופן סלוגן */
+            font-weight: 400; /* משקל רגיל */
+            color: var(--md-sys-on-surface-variant); /* התאמת צבע סלוגן לקונטרסט */
         }
 
         .filters-container { padding: 0.5rem 1rem 1rem; background: var(--md-sys-surface); display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; flex-shrink: 0; }
         .input-container .material-symbols-outlined { color: var(--md-sys-on-surface-variant); }
         .search-input, #city-filter { width: 100%; border: none; outline: none; font-size: 1rem; background: transparent; appearance: none; color: var(--md-sys-on-surface-variant); }
         .map-container { flex-grow: 1; position: relative; }
-        #map { height: 100%; width: 100%; background: #f0f0f0; display: flex; align-items: center; justify-content: center;} /* Added flex properties for centering error message */
+        #map { height: 100%; width: 100%; background: #f0f0f0; display: flex; align-items: center; justify-content: center;} /* הוספת מאפייני פלקס למיקום הודעת שגיאה במרכז */
         .participant-count { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.9); padding: 0.5rem 1rem; border-radius: 12px; z-index: 1; font-size: 0.875rem; }
         .gm-style-iw-d { overflow: hidden !important; } .gm-style-iw-c { padding: 0 !important; border-radius: 16px !important; }
         .popup-box { padding: 1rem; text-align: center; max-width: 280px; }
@@ -129,15 +129,15 @@
         import { getFirestore, collection, getDocs, query, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // *** הגדרות Firebase: זהו החלק הקריטי ביותר! ***
-        // *** אובייקט ה-firebaseConfig כאן עודכן לערכים המדויקים שנלקחו מפרויקט Firebase שלך. ***
+        // *** אובייקט ה-firebaseConfig כאן עודכן לערכים המדויקים שנלקחו מצילומי המסך האחרונים שלך מפרויקט Firebase שלך. ***
         // *** זה אמור לפתור את שגיאת "auth/api-key-not-valid" / "auth/configuration-not-found" ***
         const firebaseConfig = {
-            apiKey: "AIzaSyCQc9P30rQmjoR9rsAPF1XrTiBwCF9_Cg", // זהו מפתח ה-API המדויק מפרויקט ה-Firebase שלך!
+            apiKey: "AIzaSyD9Otp32sofmjDfI3aP31XskTxRuCF9_Cg", // זהו מפתח ה-API המדויק שלך מפרויקט ה-Firebase!
             authDomain: "maya-delegation-to-uganda.firebaseapp.com",
             projectId: "maya-delegation-to-uganda",
-            storageBucket: "maya-delegation-to-uganda.appspot.com",
+            storageBucket: "maya-delegation-to-uganda.firebasestorage.app",
             messagingSenderId: "543677265577",
-            appId: "1:543677265577:web:2d9f122e2b545dff6b"
+            appId: "1:543677265577:web:7c8f122ed21f6c5aaadbb8"
         };
         
         const app = initializeApp(firebaseConfig);
