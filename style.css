@@ -128,7 +128,7 @@ body {
     font-weight: 300;
 }
 
-/* טריוויה */
+/* טריוויה - קטעים אלו נשארים כי לא ביקשת להסיר אותם מה-CSS */
 #trivia-btn {
     background-color: #6c63ff;
     color: white;
@@ -321,9 +321,17 @@ body {
 
 .add-fab {
     bottom: 1rem;
-    left: 1rem;
+    left: 1rem; /* מיקום בצד שמאל */
     background: linear-gradient(135deg, var(--md-success), #059669);
 }
+
+/* עיצוב חדש לכפתור איפוס המפה */
+.reset-fab {
+    bottom: 1rem;
+    right: 1rem; /* מיקום בצד ימין */
+    background: linear-gradient(135deg, #3b82f6, #2563eb); /* גוונים של כחול */
+}
+
 
 .fab:hover {
     transform: scale(1.1);
@@ -522,20 +530,20 @@ body {
     font-size: 1.2rem;
 }
 
-.popup-btn.phone { 
-    background: linear-gradient(135deg, var(--md-primary), #4f46e5); 
+.popup-btn.phone {
+    background: linear-gradient(135deg, var(--md-primary), #4f46e5);
 }
-.popup-btn.whatsapp { 
-    background: linear-gradient(135deg, var(--md-success), #059669); 
+.popup-btn.whatsapp {
+    background: linear-gradient(135deg, var(--md-success), #059669);
 }
-.popup-btn.edit { 
+.popup-btn.edit {
     background: linear-gradient(135deg, var(--md-warning), #d97706);
 }
-.popup-btn.delete { 
-    background: linear-gradient(135deg, var(--md-error), #dc2626); 
+.popup-btn.delete {
+    background: linear-gradient(135deg, var(--md-error), #dc2626);
 }
-.popup-btn.carpool { 
-    background: linear-gradient(135deg, #374151, #1f2937); 
+.popup-btn.carpool {
+    background: linear-gradient(135deg, #374151, #1f2937);
 }
 
 .popup-btn:hover {
@@ -623,5 +631,20 @@ body {
 
     .admin-controls {
         flex-direction: column;
+    }
+
+    /* התאמה למובייל - מיקום כפתורים צפים */
+    .add-fab {
+        bottom: 0.75rem;
+        left: 0.75rem;
+        width: 50px; /* קצת קטן יותר */
+        height: 50px;
+    }
+
+    .reset-fab {
+        bottom: 0.75rem;
+        right: 0.75rem;
+        width: 50px; /* קצת קטן יותר */
+        height: 50px;
     }
 }
